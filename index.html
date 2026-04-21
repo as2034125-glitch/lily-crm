@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lily · 學員追蹤戰情室</title>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+/* ══════════════════════════════════════
+   全域變數 & Reset
+══════════════════════════════════════ */
+:root {
+  --h:58px; --tab:46px;
+  --bg:#f5f7fa; --bg2:#ffffff; --bg3:#f0f4f8;
+  --surface:#e8edf3; --surface2:#dce3eb;
+  --border:#e2e8f0; --border2:#c8d3de;
+  --accent:#0ea5e9; --accent-d:#0284c7; --accent-l:#e0f2fe;
+  --gold:#d97706; --danger:#ef4444; --success:#10b981;
+  --text:#1e293b; --text2:#475569; --text3:#94a3b8;
+  --radius:14px; --radius-sm:8px;
+  --shadow:0 1px 4px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.06);
+  --shadow-md:0 4px 24px rgba(15,23,42,.10);
+  --shadow-lg:0 12px 48px rgba(15,23,42,.15);
+  --font-en:'DM Sans',sans-serif;
+  --font-tc:'Noto Sans TC','Microsoft JhengHei',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-tc);font-size:14px;line-height:1.6;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:99px;}
+
+/* ══════════════════════════════════════
+   Header
+══════════════════════════════════════ */
+header{
+  height:var(--h);background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;position:relative;z-index:20;
+  box-shadow:0 1px 0 var(--border),0 2px 8px rgba(15,23,42,.04);
+}
+.header-logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent-d) 100%);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(14,165,233,.35);
+}
+.logo-mark svg{width:16px;height:16px;fill:white;}
+.header-logo h2{font-family:var(--font-en);font-size:16px;font-weight:700;color:var(--text);}
+.header-logo h2 span{color:var(--accent);}
+.header-date{font-family:var(--font-en);font-size:12px;color:var(--text3);}
+
+/* ══════════════════════════════════════
+   Tabs
+══════════════════════════════════════ */
+.nav-tabs{
+  display:flex;height:var(--tab);background:var(--bg2);
+  border-bottom:1px solid var(--border);padding:0 20px;gap:2px;
+}
+.tab-item{
+  display:flex;align-items:center;gap:7px;padding:0 18px;cursor:pointer;
+  font-size:13px;font-weight:500;color:var(--text3);
+  border-bottom:2px solid transparent;transition:color .2s,border-color .2s;white-space:nowrap;
+}
+.tab-item svg{width:14px;height:14px;}
+.tab-item.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-item:hover:not(.active){color:var(--text2);}
+
+/* ══════════════════════════════════════
+   Pages
+══════════════════════════════════════ */
+.page-content{display:none;height:calc(100vh - var(--h) - var(--tab));width:100vw;overflow:hidden;}
+.page-content.active{display:flex;}
+
+/* ─── 行事曆 ─── */
+.calendar-wrapper{flex:1.6;background:var(--bg2);padding:18px;border-right:1px solid var(--border);overflow-y:auto;min-width:0;}
+#calendar{height:100%;min-height:640px;}
+.fc .fc-toolbar-title{font-family:var(--font-en);font-size:16px!important;font-weight:700;color:var(--text)!important;}
+.fc .fc-button{background:var(--bg3)!important;border:1px solid var(--border)!important;color:var(--text2)!important;border-radius:var(--radius-sm)!important;font-size:12px!important;padding:5px 10px!important;box-shadow:none!important;}
+.fc .fc-button:hover{background:var(--surface2)!important;color:var(--accent)!important;}
+.fc .fc-button-primary:not(:disabled).fc-button-active{background:var(--accent-l)!important;color:var(--accent-d)!important;border-color:var(--accent)!important;}
+.fc .fc-col-header-cell-cushion{font-family:var(--font-en);font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;text-decoration:none!important;}
+.fc .fc-daygrid-day-number{font-family:var(--font-en);font-size:12px;color:var(--text3);text-decoration:none!important;}
+.fc .fc-daygrid-day.fc-day-today{background:var(--accent-l)!important;}
+.fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number{color:var(--accent-d);font-weight:700;}
+.fc .fc-daygrid-day{min-height:95px!important;}
+.fc .fc-event{border-radius:5px!important;border:none!important;font-size:11px!important;font-weight:600;padding:2px 5px!important;}
+.fc-theme-standard td,.fc-theme-standard th{border-color:var(--border)!important;}
+.fc-scrollgrid{border-color:var(--border)!important;}
+
+/* ─── 看板 ─── */
+.board-wrapper{flex:1;padding:16px;background:var(--bg);overflow-x:auto;display:flex;flex-direction:column;min-width:0;}
+.board-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.board-header h3{font-size:11px;font-weight:700;color:var(--text3);font-family:var(--font-en);letter-spacing:.8px;text-transform:uppercase;}
+.board-columns{display:flex;gap:10px;flex:1;overflow-x:auto;padding-bottom:6px;}
+.column{flex:0 0 188px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);display:flex;flex-direction:column;max-height:100%;box-shadow:var(--shadow);}
+.column-header{padding:10px 12px;border-radius:var(--radius) var(--radius) 0 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.col-title{font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px;color:var(--text);}
+.col-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.col-count{font-size:11px;color:var(--text3);font-family:var(--font-en);background:var(--bg3);padding:1px 7px;border-radius:99px;}
+.list-area{flex:1;padding:8px;overflow-y:auto;}
+.card{background:var(--bg2);padding:11px 12px;margin-bottom:7px;border-radius:10px;cursor:pointer;border:1px solid var(--border);border-left:3px solid var(--accent);transition:transform .15s,box-shadow .15s,border-color .15s;box-shadow:0 1px 3px rgba(15,23,42,.04);}
+.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--border2);}
+.card-name{font-weight:700;font-size:13px;color:var(--text);}
+.card-time{font-family:var(--font-en);font-size:10px;color:var(--text3);margin-top:4px;display:block;}
+.card-plan{font-size:10px;font-weight:700;color:var(--gold);display:block;margin-top:3px;}
+
+/* ─── 清單 ─── */
+.list-page{flex-direction:column;padding:20px;overflow:hidden;background:var(--bg);gap:14px;}
+.toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.search-wrap{position:relative;}
+.search-wrap input{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:9px 14px 9px 36px;border-radius:var(--radius-sm);font-size:13px;width:240px;outline:none;transition:border-color .2s;box-shadow:var(--shadow);}
+.search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-l);}
+.search-wrap input::placeholder{color:var(--text3);}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;}
+.table-wrap{overflow:auto;flex:1;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg2);box-shadow:var(--shadow);}
+.excel-table{width:100%;border-collapse:collapse;table-layout:fixed;}
+.excel-table th{background:var(--bg3);padding:10px 14px;border-bottom:1px solid var(--border2);font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;position:sticky;top:0;z-index:2;text-align:left;}
+.excel-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);}
+.excel-table tbody tr:last-child td{border-bottom:none;}
+.excel-table tbody tr:hover td{background:var(--accent-l);cursor:pointer;}
+.status-pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;}
+
+/* ─── 業績 ─── */
+.sales-page{flex-direction:column;padding:22px;overflow-y:auto;background:var(--bg);gap:18px;}
+.sales-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
+.stat-card{background:var(--bg2);padding:20px 22px;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-d));}
+.stat-card .label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.stat-card .value{font-family:var(--font-en);font-size:28px;font-weight:700;color:var(--text);margin:8px 0 2px;}
+.stat-card .sub{font-size:12px;color:var(--text3);}
+.progress-container{background:var(--bg3);border-radius:99px;height:6px;margin-top:10px;overflow:hidden;}
+.progress-bar{background:linear-gradient(90deg,var(--accent),var(--accent-d));height:100%;border-radius:99px;transition:width .6s cubic-bezier(.34,1.56,.64,1);}
+.sales-detail-card{background:var(--bg2);padding:18px 20px;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);flex:1;}
+.sales-detail-card h3{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+
+/* ══════════════════════════════════════
+   報價單頁面
+══════════════════════════════════════ */
+.quote-page{
+  flex-direction:column;overflow:auto!important;
+  background:var(--bg);padding:20px 24px 80px;
+  -webkit-overflow-scrolling:touch;
+}
+/* 報價單容器 */
+.qcard{
+  width:100%;flex-shrink:0;
+  background:var(--bg2);border-radius:var(--radius);
+  border:1px solid var(--border);box-shadow:var(--shadow);overflow:visible;
+}
+/* 報價單頂部工具列 */
+.quote-toolbar{
+  width:100%;margin-bottom:16px;flex-shrink:0;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+}
+.quote-toolbar-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;font-family:var(--font-en);}
+/* 報價單 header band */
+.q-header{
+  background:var(--bg2);
+  border-bottom:2px solid var(--accent);
+  padding:22px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+}
+.q-header-left{display:flex;flex-direction:column;gap:8px;}
+.q-header-left .ql{font-size:12px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.6px;}
+.q-sname-wrap{display:flex;align-items:center;gap:12px;}
+.q-sname-wrap input{
+  background:var(--bg3);border:1.5px solid var(--border);
+  color:var(--text);font-size:22px;font-weight:900;font-family:var(--font-tc);
+  border-radius:8px;padding:6px 14px;outline:none;width:220px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.q-sname-wrap input::placeholder{color:var(--text3);}
+.q-sname-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-l);background:var(--bg2);}
+.q-sname-wrap span{color:var(--text2);font-size:18px;font-weight:600;}
+.q-header-right{text-align:right;}
+.q-date-label{font-size:12px;color:var(--text3);margin-bottom:4px;font-family:var(--font-en);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.q-date-val{font-size:16px;color:var(--accent);font-family:var(--font-en);font-weight:700;}
+.q-sec{
+  padding:14px 22px 11px;font-size:13px;font-weight:700;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.q-add-btn{font-size:13px;font-weight:600;color:var(--accent);background:var(--accent-l);border:none;border-radius:6px;padding:5px 14px;cursor:pointer;text-transform:none;letter-spacing:0;transition:opacity .15s;}
+.q-add-btn:hover{opacity:.75;}
+/* 方案表格 */
+.q-table-wrap{overflow-x:auto;padding-bottom:2px;}
+table.q-table{width:100%;border-collapse:collapse;}
+.q-table th{background:#f1f5f9;padding:12px 12px;font-size:12px;font-weight:700;color:var(--text3);text-align:center;text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);white-space:nowrap;}
+.q-table th:last-child{border-right:none;}
+.q-table th.th-prog{background:#e8f0fe;color:#1a73e8;}
+.q-table th.th-elec{background:#fffbeb;color:#b45309;}
+.q-table th.th-magic{background:#ecfdf5;color:#065f46;}
+.q-table tr.qsubhead th{background:#f8fafc;font-size:11px;color:var(--text3);padding:5px 10px;border-bottom:1px solid var(--border);font-weight:600;}
+.q-table tr.qsubhead th.th-prog{background:#f0f6ff;}
+.q-table tr.qsubhead th.th-elec{background:#fffdf0;}
+.q-table tr.qsubhead th.th-gift{background:#fef9c3;color:#e53935;font-weight:700;}
+.q-table tr.qsubhead th.th-magic{background:#f0fdf4;}
+.q-table td{padding:12px 14px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:center;font-size:14px;vertical-align:middle;}
+.q-table td:last-child{border-right:none;}
+.q-table tr:last-child td{border-bottom:none;}
+td.qtd-name input,td.qtd-months input{width:100%;background:transparent;border:none;outline:none;font-family:var(--font-tc);font-size:14px;color:var(--text);text-align:center;font-weight:600;cursor:text;padding:2px 6px;border-radius:4px;transition:background .15s;}
+td.qtd-name input{text-align:left;font-size:15px;font-weight:700;}
+td.qtd-name{text-align:left;}
+td.qtd-name input:focus,td.qtd-months input:focus{background:var(--accent-l);}
+td .qnum{width:100%;background:transparent;border:none;outline:none;font-family:var(--font-en);font-size:14px;font-weight:700;color:var(--text);text-align:center;padding:3px 2px;border-radius:6px;transition:background .15s;-moz-appearance:textfield;}
+td .qnum::-webkit-outer-spin-button,td .qnum::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+td .qnum:focus{background:#f0f6ff;}
+td .qnum.gift-num{color:#e53935;}
+/* 刪除按鈕 */
+td.qtd-del button{background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:15px;line-height:1;padding:2px 4px;border-radius:4px;transition:color .15s,background .15s;}
+td.qtd-del button:hover{color:var(--danger);background:#fef2f2;}
+/* 勤學活動 */
+table.dil-table{width:100%;border-collapse:collapse;}
+.dil-table th{background:#fdf4ff;padding:11px 12px;font-size:12px;font-weight:700;color:#7e22ce;text-align:center;letter-spacing:.3px;border-bottom:2px solid #e9d5ff;border-right:1px solid #e9d5ff;}
+.dil-table th:last-child{border-right:none;}
+.dil-table td{padding:11px 14px;text-align:center;font-size:14px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);color:var(--text2);vertical-align:middle;}
+.dil-table td:last-child{border-right:none;}
+.dil-table tr:last-child td{border-bottom:none;}
+.dil-table td input.di{width:100%;background:transparent;border:none;outline:none;font-family:var(--font-tc);font-size:13px;color:var(--text2);text-align:center;padding:2px 4px;border-radius:4px;transition:background .15s;}
+.dil-table td input.di:focus{background:#fdf4ff;color:var(--text);}
+.dil-table td.dn input.di{font-family:var(--font-en);font-weight:700;color:#e53935;font-size:14px;}
+.dil-table td.dtotal{font-family:var(--font-en);font-weight:900;font-size:15px;color:#7e22ce;background:#faf5ff;}
+.dil-table td.dp input.di{color:#e53935;font-weight:700;font-size:13px;}
+/* 備註 */
+.q-remarks{padding:14px 22px;border-top:1px solid var(--border);}
+.q-remarks-label{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.q-remarks textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--text2);font-family:var(--font-tc);resize:vertical;min-height:50px;outline:none;transition:border-color .2s;}
+.q-remarks textarea:focus{border-color:var(--accent);background:var(--bg2);}
+
+/* ══════════════════════════════════════
+   共用按鈕
+══════════════════════════════════════ */
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;padding:8px 16px;border-radius:var(--radius-sm);cursor:pointer;font-weight:600;font-size:13px;font-family:var(--font-tc);transition:opacity .15s,transform .1s,box-shadow .15s;}
+.btn:hover{opacity:.88;}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--accent);color:white;box-shadow:0 2px 8px rgba(14,165,233,.3);}
+.btn-success{background:var(--success);color:white;}
+.btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-danger{background:var(--danger);color:white;}
+.btn-sm{padding:6px 12px;font-size:12px;}
+
+/* ══════════════════════════════════════
+   訊息產生器
+══════════════════════════════════════ */
+.msg-section code{font-family:var(--font-en);font-size:11px;}
+.msg-section .form-group label{display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.msg-section .form-group input,.msg-section .form-group textarea{
+  width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);font-size:13px;font-family:var(--font-tc);outline:none;transition:border-color .2s;
+}
+.msg-section .form-group input:focus,.msg-section .form-group textarea:focus{border-color:var(--accent);background:var(--bg2);}
+
+/* ══════════════════════════════════════
+   Context Menu
+══════════════════════════════════════ */
+.context-menu{position:fixed;background:var(--bg2);border-radius:10px;z-index:6000;display:none;box-shadow:var(--shadow-lg);border:1px solid var(--border);overflow:hidden;min-width:145px;}
+.context-menu div{padding:10px 16px;cursor:pointer;font-size:13px;color:var(--text2);display:flex;align-items:center;gap:8px;}
+.context-menu div:hover{background:var(--bg3);color:var(--text);}
+.context-menu .danger:hover{background:#fef2f2;color:var(--danger);}
+.context-menu hr{border:none;border-top:1px solid var(--border);margin:2px 0;}
+
+/* ══════════════════════════════════════
+   Overlay / Modal
+══════════════════════════════════════ */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:3000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.overlay.show{display:flex;}
+.modal{background:var(--bg2);padding:26px 28px;border-radius:18px;width:420px;max-width:95vw;border:1px solid var(--border);box-shadow:var(--shadow-lg);animation:modalIn .22s cubic-bezier(.34,1.2,.64,1);max-height:90vh;overflow-y:auto;}
+@keyframes modalIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+.modal-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:18px;display:flex;align-items:center;gap:9px;}
+.accent-chip{background:var(--accent-l);color:var(--accent-d);font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font-tc);outline:none;transition:border-color .2s,box-shadow .2s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);background:var(--bg2);box-shadow:0 0 0 3px var(--accent-l);}
+.form-row{display:flex;gap:8px;}
+.form-row>*{flex:1;min-width:0;}
+#planSection{background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%);border:1px solid #bae6fd;border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;}
+#planSection .plan-label{font-size:12px;font-weight:700;color:var(--accent-d);display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+.plan-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.plan-btn{padding:9px 10px;border-radius:var(--radius-sm);border:1.5px solid var(--border2);background:var(--bg2);cursor:pointer;text-align:left;transition:border-color .15s,background .15s;font-family:var(--font-tc);}
+.plan-btn:hover{border-color:var(--accent);background:var(--accent-l);}
+.plan-btn.selected{border-color:var(--accent);background:var(--accent-l);box-shadow:0 0 0 2px rgba(14,165,233,.2);}
+.plan-btn .plan-name{font-size:12px;font-weight:700;color:var(--text);display:block;}
+.plan-btn .plan-price{font-size:11px;color:var(--accent-d);font-family:var(--font-en);display:block;margin-top:2px;}
+.plan-btn.custom-btn{grid-column:1 / -1;}
+.plan-btn.custom-btn .plan-name{color:var(--gold);}
+#customRow{display:none;flex-direction:column;gap:8px;margin-top:4px;}
+#customRow input{padding:8px 12px;border-radius:var(--radius-sm);border:1.5px solid var(--accent);background:var(--bg2);color:var(--text);font-size:13px;font-family:var(--font-tc);outline:none;width:100%;}
+/* 狀態管理 */
+.status-modal{background:var(--bg2);padding:24px 26px;border-radius:18px;width:380px;max-width:95vw;border:1px solid var(--border);box-shadow:var(--shadow-lg);animation:modalIn .22s cubic-bezier(.34,1.2,.64,1);}
+.status-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:7px;background:var(--bg3);}
+.status-swatch{width:14px;height:14px;border-radius:50%;flex-shrink:0;cursor:pointer;border:2px solid rgba(0,0,0,.08);}
+.status-name{flex:1;font-size:13px;font-weight:600;color:var(--text2);}
+.status-count{font-size:11px;color:var(--text3);font-family:var(--font-en);margin-right:2px;}
+.status-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;}
+.status-del:hover{color:var(--danger);}
+.new-status-row{display:flex;gap:8px;margin-top:12px;align-items:center;}
+.new-status-row input[type=text]{flex:1;padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font-tc);outline:none;}
+.new-status-row input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-l);}
+.new-status-row input[type=color]{width:36px;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:none;padding:3px;}
+/* 確認 dialog */
+.confirm-box{background:var(--bg2);padding:28px 26px;border-radius:18px;width:320px;text-align:center;border:1px solid var(--border);box-shadow:var(--shadow-lg);animation:modalIn .22s cubic-bezier(.34,1.2,.64,1);}
+.confirm-icon{font-size:38px;margin-bottom:10px;}
+.confirm-box p{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.6;}
+
+/* ══════════════════════════════════════
+   RWD
+══════════════════════════════════════ */
+@media(max-width:768px){
+  .header-date{display:none;}
+  .tab-item{padding:0 10px;font-size:12px;}
+  #main-page{flex-direction:column;overflow-y:auto;}
+  .calendar-wrapper{flex:none;height:380px;border-right:none;border-bottom:1px solid var(--border);}
+  .board-wrapper{flex:none;}
+  .sales-summary{grid-template-columns:1fr 1fr;}
+  .plan-grid{grid-template-columns:1fr;}
+  .plan-btn.custom-btn{grid-column:auto;}
+  .quote-page{padding:14px 10px 40px;}
+}
+
+/* ══════════════════════════════════════
+   模板選單 Modal
+══════════════════════════════════════ */
+.tpl-modal{
+  background:var(--bg2);padding:24px 26px;
+  border-radius:18px;width:520px;max-width:96vw;
+  border:1px solid var(--border);box-shadow:var(--shadow-lg);
+  animation:modalIn .22s cubic-bezier(.34,1.2,.64,1);
+}
+.tpl-modal-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.tpl-card{
+  background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;
+  padding:14px 16px;cursor:pointer;transition:border-color .15s,background .15s,transform .1s;
+  text-align:left;
+}
+.tpl-card:hover{border-color:var(--accent);background:var(--accent-l);transform:translateY(-1px);}
+.tpl-card.blank{border-style:dashed;color:var(--text3);}
+.tpl-card.blank:hover{color:var(--accent);}
+.tpl-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.tpl-card.blank .tpl-name{color:inherit;}
+.tpl-meta{display:flex;flex-wrap:wrap;gap:4px;}
+.tpl-tag{font-size:11px;padding:2px 7px;border-radius:99px;background:var(--bg2);border:1px solid var(--border);color:var(--text3);font-family:var(--font-en);}
+.tpl-tag.prog{background:#e8f0fe;color:#1a73e8;border-color:#bcd0f7;}
+.tpl-tag.elec{background:#fffbeb;color:#b45309;border-color:#fde68a;}
+.tpl-tag.magic{background:#ecfdf5;color:#065f46;border-color:#a7f3d0;}
+.tpl-tag.price{background:#f0fdf4;color:var(--success);border-color:#bbf7d0;font-weight:700;}
+.tpl-tag.months{background:var(--bg3);color:var(--text3);border-color:var(--border);}
+
+/* ══════════════════════════════════════
+   列印
+══════════════════════════════════════ */
+@media print{
+  body{background:white;padding:0;overflow:visible;}
+  header,.nav-tabs,.no-print{display:none!important;}
+  .page-content{display:none!important;height:auto;}
+  #quote-page{display:flex!important;height:auto;overflow:visible;}
+  .quote-page{padding:0;background:white;}
+  .qcard{box-shadow:none;border:none;margin:0;max-width:100%;}
+  .quote-toolbar{display:none!important;}
+  td .qnum,td.qtd-name input,td.qtd-months input,.dil-table td input.di,
+  .q-sname-wrap input,.q-remarks textarea{background:transparent!important;border:none!important;box-shadow:none!important;}
+  td.qtd-del,.no-print{display:none!important;}
+  .q-add-btn{display:none!important;}
+  .q-table th select{display:none!important;}
+  .q-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .q-table th,.dil-table th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+    <h2>Lily · <span>戰情室</span></h2>
+  </div>
+  <div class="header-date" id="headerDate"></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="syncStatus" style="font-size:11px;color:var(--text3);font-family:var(--font-en)"></span>
+    <button class="btn btn-ghost btn-sm" onclick="cloudSync()" id="syncBtn" style="font-size:12px;padding:5px 10px">☁️ 同步</button>
+  </div>
+</header>
+
+<div class="nav-tabs">
+  <div class="tab-item active" onclick="switchPage('main-page',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>看板與行事曆
+  </div>
+  <div class="tab-item" onclick="switchPage('list-page',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>清單管理
+  </div>
+  <div class="tab-item" onclick="switchPage('sales-page',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>業績管理
+  </div>
+  <div class="tab-item" onclick="switchPage('quote-page',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>方案報價
+  </div>
+</div>
+
+<!-- ═══ 看板 + 行事曆 ═══ -->
+<div id="main-page" class="page-content active">
+  <div class="calendar-wrapper"><div id="calendar"></div></div>
+  <div class="board-wrapper">
+    <div class="board-header">
+      <h3>KANBAN BOARD</h3>
+      <button class="btn btn-ghost btn-sm" onclick="openStatusManager()">⚙ 管理狀態</button>
+    </div>
+    <div class="board-columns" id="board"></div>
+  </div>
+</div>
+
+<!-- ═══ 清單 ═══ -->
+<div id="list-page" class="page-content list-page">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="listSearch" placeholder="搜尋學員姓名..." oninput="renderList()">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-success btn-sm" onclick="exportExcel()">↓ 匯出 Excel</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal()">+ 新增學員</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="excel-table">
+      <thead><tr>
+        <th style="width:100px">姓名</th><th style="width:155px">預約時間</th>
+        <th style="width:130px">聯絡事項</th><th style="width:95px">狀態</th><th>備註</th>
+      </tr></thead>
+      <tbody id="list-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ 業績 ═══ -->
+<div id="sales-page" class="page-content sales-page">
+  <div class="sales-summary">
+    <div class="stat-card">
+      <div class="label">本月目標業績</div>
+      <div style="display:flex;align-items:baseline;gap:4px">
+        <span style="font-size:13px;color:var(--text3);font-family:var(--font-en)">NT$</span>
+        <input type="number" id="monthlyGoal" value="300000" onchange="updateSalesUI()"
+          style="border:none;font-size:26px;font-weight:700;width:170px;outline:none;background:transparent;color:var(--text);font-family:var(--font-en)">
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="label">目前累積業績</div>
+      <div class="value" id="currentSales">NT$ 0</div>
+      <div class="progress-container"><div class="progress-bar" id="salesProgress" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="label">目標達成率</div>
+      <div class="value" id="achievementRate" style="color:var(--accent)">0%</div>
+      <div class="sub" id="dealCount">成交人數：0 人</div>
+    </div>
+  </div>
+  <div class="sales-detail-card">
+    <h3>本月成交明細 <button class="btn btn-ghost btn-sm" onclick="exportSalesExcel()">↓ 匯出明細</button></h3>
+    <div style="overflow:auto">
+      <table class="excel-table">
+        <thead><tr><th>日期</th><th>姓名</th><th>購買方案</th><th>金額</th></tr></thead>
+        <tbody id="sales-detail-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 報價單 ═══ -->
+<div id="quote-page" class="page-content quote-page">
+  <div class="quote-toolbar no-print">
+    <div class="quote-toolbar-label">📋 方案報價單</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="loadQuoteList()" style="color:var(--accent)">📂 載入報價</button>
+      <button class="btn btn-ghost btn-sm" onclick="saveQuote()" style="color:var(--success)">💾 儲存報價</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetQuote()">↺ 重置</button>
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 列印 / PDF</button>
+    </div>
+  </div>
+
+  <div class="qcard">
+    <!-- header -->
+    <div class="q-header">
+      <div class="q-header-left">
+        <div class="ql">學員姓名</div>
+        <div class="q-sname-wrap">
+          <input type="text" id="qStudentName" placeholder="請輸入學員姓名" maxlength="20">
+          <span>的學習方案</span>
+        </div>
+
+      </div>
+      <div class="q-header-right">
+        <div class="q-date-label">報價日期</div>
+        <div class="q-date-val" id="qDate"></div>
+      </div>
+    </div>
+
+    <!-- 方案明細 -->
+    <div class="q-sec">
+      學習方案明細
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="q-add-btn" onclick="addQGiftCol()" title="新增一個贈送欄位">🎁 新增贈送欄</button>
+        <button class="q-add-btn" onclick="openTplPicker('KIDS')" style="background:#e0f2fe;color:#0284c7">＋ KIDS 方案</button>
+        <button class="q-add-btn" onclick="openTplPicker('Junior')" style="background:#fef9c3;color:#b45309">＋ Junior 方案</button>
+      </div>
+    </div>
+    <!-- 動態表格，由 JS 完整渲染 -->
+    <div class="q-table-wrap" id="qPlanTableWrap"></div>
+
+    <!-- 勤學活動 -->
+    <div class="q-sec" style="margin-top:4px">
+      勤學活動
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="q-add-btn" onclick="applyDilTemplate('KIDS')" style="background:#e0f2fe;color:#0284c7">套用 KIDS</button>
+        <button class="q-add-btn" onclick="applyDilTemplate('Junior')" style="background:#fef9c3;color:#b45309">套用 Junior</button>
+        <button class="q-add-btn" onclick="addQDil()">＋ 新增</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;padding-bottom:4px" id="qDilTableWrap"></div>
+
+    <!-- 備註 -->
+    <div class="q-remarks">
+      <div class="q-remarks-label">備註</div>
+      <textarea id="qRemarks" placeholder="備註：大夢想家與小夢想家以家庭方案參與勤學活動依照各自帳號分別計算。"></textarea>
+    </div>
+
+    <!-- 訊息產生器 -->
+    <div class="msg-section no-print">
+      <div class="q-sec" style="border-top:1px solid var(--border);border-bottom:none">
+        訊息產生器
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="q-add-btn" onclick="toggleMsgTpl()" id="msgTplToggle">✏️ 編輯模板</button>
+          <button class="q-add-btn" onclick="generateMsg()" style="background:#dcfce7;color:#166534">📋 產生訊息</button>
+        </div>
+      </div>
+
+      <!-- 模板編輯區（預設隱藏） -->
+      <div id="msgTplEditor" style="display:none;padding:14px 22px;border-bottom:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.6">
+          可用變數：<code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{姓名}</code>
+          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{方案}</code>
+          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{月數}</code>
+          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{月付}</code>
+          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{總價}</code>
+          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{一付加贈}</code>
+          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{截止日}</code>
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label>贈送項目（每行一項，會自動產生 • 列表）</label>
+          <textarea id="msgGifts" rows="3" style="font-size:13px" placeholder="課程顧問特別加贈：+5 堂選修課&#10;兒童節加碼：+10 堂選修課"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:10px">
+          <label>優惠截止日</label>
+          <input type="date" id="msgDeadline">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>訊息模板（每個方案會各產生一段）</label>
+          <textarea id="msgTemplate" rows="16" style="font-size:13px;font-family:var(--font-tc);line-height:1.7"></textarea>
+        </div>
+      </div>
+
+      <!-- 產生結果區 -->
+      <div id="msgOutput" style="display:none;padding:14px 22px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div style="font-size:12px;color:var(--text3);font-weight:600">預覽訊息</div>
+          <button class="q-add-btn" onclick="copyMsg()" id="copyBtn" style="background:#dcfce7;color:#166534">📋 複製全部</button>
+        </div>
+        <div id="msgPreview" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 18px;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text);cursor:text;user-select:all;max-height:500px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 右鍵選單 -->
+<div id="contextMenu" class="context-menu"></div>
+
+<!-- Overlay -->
+<div id="overlay" class="overlay" onclick="handleOverlayClick(event)">
+  <!-- 學員 Modal -->
+  <div id="modal" class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">
+      <span id="modalTitle">新增學員</span>
+      <span class="accent-chip" id="modalChip">NEW</span>
+    </div>
+    <div class="form-group"><label>姓名</label><input id="mName" placeholder="請輸入學員姓名"></div>
+    <div class="form-group">
+      <label>日期與時間</label>
+      <div class="form-row">
+        <input type="date" id="mDate">
+        <select id="mHour"></select>
+        <select id="mMin"><option>00</option><option>30</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>狀態</label><select id="mStatus" onchange="onStatusChange()"></select></div>
+    <div id="planSection" style="display:none">
+      <div class="plan-label">💎 選擇課程方案</div>
+      <div class="plan-grid" id="planGrid">
+        <button class="plan-btn" onclick="selectPlan('輕鬆學',68400,this)"><span class="plan-name">輕鬆學</span><span class="plan-price">NT$68,400</span></button>
+        <button class="plan-btn" onclick="selectPlan('進階學',92400,this)"><span class="plan-name">進階學</span><span class="plan-price">NT$92,400</span></button>
+        <button class="plan-btn" onclick="selectPlan('小夢想家',116400,this)"><span class="plan-name">小夢想家</span><span class="plan-price">NT$116,400</span></button>
+        <button class="plan-btn" onclick="selectPlan('大夢想家',140400,this)"><span class="plan-name">大夢想家</span><span class="plan-price">NT$140,400</span></button>
+        <button class="plan-btn custom-btn" id="customPlanBtn" onclick="selectCustomPlan(this)"><span class="plan-name">✏️ 自訂課程</span><span class="plan-price">自行輸入課程名稱與金額</span></button>
+      </div>
+      <div id="customRow">
+        <input type="text" id="customPlanName" placeholder="課程名稱（例：補充課程）">
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+          <span style="font-size:13px;color:var(--text3);font-family:var(--font-en);white-space:nowrap">NT$</span>
+          <input type="number" id="customPlanAmount" placeholder="0" style="flex:1;font-size:14px;font-weight:700;font-family:var(--font-en);text-align:center">
+        </div>
+      </div>
+    </div>
+    <div class="form-group"><label>聯絡事項</label><input id="mContact" placeholder="下次聯絡提醒..."></div>
+    <div class="form-group"><label>私房備註</label><textarea id="mNote" rows="2" placeholder="個人備忘..."></textarea></div>
+    <!-- 報價單快捷按鈕 -->
+    <div style="margin-bottom:14px">
+      <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;gap:6px" onclick="openQuoteFromModal()">
+        📋 開啟此學員的報價單
+      </button>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="saveData()" style="flex:1.5">儲存</button>
+      <button class="btn btn-ghost" onclick="closeOverlay()" style="flex:1">取消</button>
+    </div>
+  </div>
+
+  <!-- 狀態管理 -->
+  <div id="statusModal" class="status-modal" onclick="event.stopPropagation()" style="display:none">
+    <div class="modal-title">管理看板狀態</div>
+    <div id="statusList"></div>
+    <div class="new-status-row">
+      <input type="color" id="newStatusColor" value="#54a0ff">
+      <input type="text" id="newStatusName" placeholder="輸入新狀態名稱..." onkeydown="if(event.key==='Enter')addStatus()">
+      <button class="btn btn-primary btn-sm" onclick="addStatus()">新增</button>
+    </div>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="closeOverlay()">完成</button>
+    </div>
+  </div>
+
+  <!-- 方案模板選單 -->
+  <div id="tplModal" class="tpl-modal" onclick="event.stopPropagation()" style="display:none">
+    <div class="tpl-modal-title">📋 選擇方案模板</div>
+    <div class="tpl-grid" id="tplGrid"></div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="closeOverlay()">取消</button>
+    </div>
+  </div>
+
+  <!-- 儲存的報價單列表 -->
+  <div id="savedQuotesModal" class="tpl-modal" onclick="event.stopPropagation()" style="display:none">
+    <div class="tpl-modal-title">📂 已儲存的報價單</div>
+    <div id="savedQuotesList" style="max-height:400px;overflow-y:auto;margin-bottom:14px"></div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn btn-ghost btn-sm" onclick="closeOverlay()">關閉</button>
+    </div>
+  </div>
+
+  <!-- 刪除確認 -->
+  <div id="confirmBox" class="confirm-box" onclick="event.stopPropagation()" style="display:none">
+    <div class="confirm-icon">🗑️</div>
+    <p id="confirmMsg">確定要移除這位學員嗎？</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-danger" onclick="confirmDelete()" style="flex:1">確定刪除</button>
+      <button class="btn btn-ghost" onclick="closeOverlay()" style="flex:1">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════ CRM 資料 ════════ */
+const API_URL = 'https://script.google.com/macros/s/AKfycbwD_Ymj8cFe_fKZVDSXOMaGEhRoJxlzrudtiE664jUVe4IYroOwCps8eW1fD45uy_Pn9Q/exec';
+let data     = JSON.parse(localStorage.getItem("lily_crm_vFinal"))        || [];
+let statuses = JSON.parse(localStorage.getItem("lily_crm_status_vFinal")) || [
+  {name:"已邀約",color:"#54a0ff"},{name:"未DEMO",color:"#ff9f43"},
+  {name:"已DEMO",color:"#1dd1a1"},{name:"成交",color:"#a29bfe"},{name:"取消",color:"#ee5253"}
+];
+const FIXED_PLANS={輕鬆學:68400,進階學:92400,小夢想家:116400,大夢想家:140400};
+function getPlanAmount(item){
+  if(!item.plan)return 0;
+  if(item.customAmount)return parseInt(item.customAmount)||0;
+  return FIXED_PLANS[item.plan]||0;
+}
+let currentEditId=null,pendingDeleteId=null,draggedId=null;
+let selectedPlanName=null,selectedPlanAmount=null,isCustomPlan=false;
+let calendarInstance=null;
+let isSyncing=false;
+
+/* ════════ 雲端同步 ════════ */
+function setSyncStatus(msg, color){
+  const el=document.getElementById('syncStatus');
+  if(el){el.textContent=msg; el.style.color=color||'var(--text3)';}
+}
+
+async function cloudPost(action, body){
+  // Apps Script 用 GET + URL encoded data 避免 CORS 問題
+  const encoded = encodeURIComponent(JSON.stringify(body));
+  const url = API_URL+'?action='+action+'&payload='+encoded;
+  const res = await fetch(url, { method:'GET' });
+  return res.json();
+}
+async function cloudGet(action){
+  const res = await fetch(API_URL+'?action='+action);
+  return res.json();
+}
+
+// 上傳到雲端（背景執行，不阻塞UI）
+async function pushToCloud(){
+  if(isSyncing) return;
+  isSyncing=true;
+  setSyncStatus('上傳中...','var(--accent)');
+  try{
+    await cloudPost('saveStudents', data);
+    await cloudPost('saveStatuses', statuses);
+    setSyncStatus('✓ 已同步','var(--success)');
+    setTimeout(()=>setSyncStatus('',''),3000);
+  }catch(e){
+    console.error('Cloud push error:',e);
+    setSyncStatus('同步失敗','var(--danger)');
+  }
+  isSyncing=false;
+}
+
+// 從雲端拉取
+async function pullFromCloud(){
+  if(isSyncing) return;
+  isSyncing=true;
+  setSyncStatus('下載中...','var(--accent)');
+  try{
+    const [students, sts, quotes] = await Promise.all([
+      cloudGet('getStudents'),
+      cloudGet('getStatuses'),
+      cloudGet('getQuotes')
+    ]);
+
+    if(Array.isArray(students) && students.length > 0){
+      data = students;
+      localStorage.setItem("lily_crm_vFinal", JSON.stringify(data));
+    }
+    if(Array.isArray(sts) && sts.length > 0){
+      statuses = sts;
+      localStorage.setItem("lily_crm_status_vFinal", JSON.stringify(statuses));
+    }
+    if(Array.isArray(quotes)){
+      localStorage.setItem('lily_quotes', JSON.stringify(quotes));
+    }
+
+    // 重新渲染所有頁面
+    if(calendarInstance){ refreshCal(); } else { initCal(); }
+    renderBoard(); renderList(); updateSalesUI();
+
+    setSyncStatus('✓ 已同步','var(--success)');
+    setTimeout(()=>setSyncStatus('',''),3000);
+  }catch(e){
+    console.error('Cloud pull error:',e);
+    setSyncStatus('同步失敗','var(--danger)');
+  }
+  isSyncing=false;
+}
+
+// 雙向同步：先拉再推
+async function cloudSync(){
+  const btn=document.getElementById('syncBtn');
+  btn.disabled=true; btn.textContent='⏳ 同步中...';
+  try{
+    await pullFromCloud();
+    await pushToCloud();
+  }catch(e){
+    console.error('Sync error:',e);
+    setSyncStatus('同步失敗','var(--danger)');
+  }
+  btn.disabled=false; btn.textContent='☁️ 同步';
+}
+
+/* 小時選項 */
+const hSel=document.getElementById('mHour');
+for(let i=0;i<24;i++){const v=String(i).padStart(2,'0');hSel.innerHTML+=`<option value="${v}">${v}</option>`;}
+
+/* 日期顯示 */
+const DAYS=['日','一','二','三','四','五','六'],_n=new Date();
+const todayStr=`${_n.getFullYear()}/${String(_n.getMonth()+1).padStart(2,'0')}/${String(_n.getDate()).padStart(2,'0')}`;
+document.getElementById('headerDate').textContent=todayStr+' 星期'+DAYS[_n.getDay()];
+document.getElementById('qDate').textContent=todayStr;
+
+function persist(){
+  localStorage.setItem("lily_crm_vFinal",JSON.stringify(data));
+  localStorage.setItem("lily_crm_status_vFinal",JSON.stringify(statuses));
+  localStorage.setItem("lily_goal",document.getElementById('monthlyGoal').value);
+  // 背景上傳雲端（不阻塞UI）
+  pushToCloud();
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ════════ 頁面切換 ════════ */
+function switchPage(pageId,el){
+  document.querySelectorAll('.page-content,.tab-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');el.classList.add('active');
+  if(pageId==='main-page'){if(calendarInstance){calendarInstance.render();refreshCal();}else initCal();renderBoard();}
+  else if(pageId==='list-page')renderList();
+  else if(pageId==='sales-page')updateSalesUI();
+}
+
+/* ════════ Calendar ════════ */
+function calEvents(){return data.map(x=>({id:x.id.toString(),title:x.name,start:x.time,backgroundColor:(statuses.find(s=>s.name===x.status)||{}).color||'#0ea5e9',borderColor:'transparent',textColor:'#fff'}));}
+function refreshCal(){if(!calendarInstance)return;calendarInstance.getEventSources().forEach(s=>s.remove());calendarInstance.addEventSource(calEvents());}
+function initCal(){
+  calendarInstance=new FullCalendar.Calendar(document.getElementById('calendar'),{
+    initialView:'dayGridMonth',locale:'zh-tw',expandRows:true,editable:true,
+    eventTimeFormat:{hour:'2-digit',minute:'2-digit',hour12:false},
+    events:calEvents(),
+    dateClick:info=>openModal(null,info.dateStr),
+    eventClick:info=>openModal(info.event.id),
+    eventDrop:info=>{
+      const item=data.find(x=>x.id==info.event.id);
+      if(item){const d=info.event.start,pad=n=>String(n).padStart(2,'0'),t=item.time.split('T')[1]||'09:00';
+        item.time=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${t}`;persist();renderBoard();updateSalesUI();}
+    },
+    eventDidMount:info=>{info.el.oncontextmenu=e=>showCtxMenu(e,info.event.id);}
+  });
+  calendarInstance.render();
+}
+
+/* ════════ 看板 ════════ */
+function renderBoard(){
+  const board=document.getElementById('board');board.innerHTML='';
+  statuses.forEach(s=>{
+    const cnt=data.filter(x=>x.status===s.name).length;
+    const col=document.createElement('div');col.className='column';
+    col.innerHTML=`<div class="column-header" style="background:${s.color}14"><div class="col-title"><div class="col-dot" style="background:${s.color}"></div>${esc(s.name)}</div><span class="col-count">${cnt}</span></div><div class="list-area"></div>`;
+    col.ondragover=e=>e.preventDefault();
+    col.ondrop=()=>{const item=data.find(x=>x.id==draggedId);if(item){item.status=s.name;persist();refreshCal();renderBoard();updateSalesUI();}};
+    const area=col.querySelector('.list-area');
+    data.filter(x=>x.status===s.name).sort((a,b)=>new Date(a.time)-new Date(b.time)).forEach(item=>{
+      const d=new Date(item.time),enDate=d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'}),tp=item.time.split('T')[1]||'';
+      const card=document.createElement('div');card.className='card';card.draggable=true;card.style.borderLeftColor=s.color;
+      const pl=item.plan?(item.customAmount?`✏️ ${item.plan}`:`💎 ${item.plan}`):'';
+      card.innerHTML=`<div class="card-name">${esc(item.name)}</div><span class="card-time">${enDate} · ${tp}</span>${pl?`<span class="card-plan">${esc(pl)}</span>`:''}`;
+      card.onclick=()=>openModal(item.id);
+      card.oncontextmenu=e=>showCtxMenu(e,item.id);
+      card.ondragstart=()=>{draggedId=item.id;};
+      area.appendChild(card);
+    });
+    board.appendChild(col);
+  });
+}
+
+/* ════════ 清單 ════════ */
+function renderList(){
+  const kw=document.getElementById('listSearch').value.toLowerCase();
+  document.getElementById('list-body').innerHTML=
+    data.filter(x=>x.name.toLowerCase().includes(kw)).sort((a,b)=>new Date(b.time)-new Date(a.time))
+      .map(item=>{const c=(statuses.find(s=>s.name===item.status)||{}).color||'#999';
+        return `<tr onclick="openModal(${item.id})" oncontextmenu="showCtxMenu(event,${item.id})">
+          <td><b style="color:var(--text)">${esc(item.name)}</b></td>
+          <td style="font-family:var(--font-en)">${esc(item.time.replace('T',' '))}</td>
+          <td>${esc(item.contact||'—')}</td>
+          <td><span class="status-pill" style="color:${c};background:${c}18;border:1px solid ${c}44">${esc(item.status)}</span></td>
+          <td style="color:var(--text3)">${esc(item.note||'')}</td></tr>`;}).join('');
+}
+
+/* ════════ 業績 ════════ */
+function updateSalesUI(){
+  const goal=parseFloat(document.getElementById('monthlyGoal').value)||1,n=new Date();
+  const deals=data.filter(x=>{const d=new Date(x.time);return x.status==='成交'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();});
+  const total=deals.reduce((s,x)=>s+getPlanAmount(x),0),rate=Math.round((total/goal)*100);
+  document.getElementById('currentSales').textContent=`NT$ ${total.toLocaleString()}`;
+  document.getElementById('achievementRate').textContent=`${rate}%`;
+  document.getElementById('salesProgress').style.width=`${Math.min(rate,100)}%`;
+  document.getElementById('dealCount').textContent=`成交人數：${deals.length} 人`;
+  document.getElementById('sales-detail-body').innerHTML=
+    deals.sort((a,b)=>new Date(b.time)-new Date(a.time)).map(x=>{
+      const amt=getPlanAmount(x),pl=x.customAmount?`✏️ ${x.plan||'自訂'}`:x.plan||'未設定';
+      return `<tr><td style="font-family:var(--font-en)">${esc(x.time.split('T')[0])}</td><td>${esc(x.name)}</td><td style="color:var(--gold)">${esc(pl)}</td><td style="font-family:var(--font-en);color:var(--success)">NT$ ${amt.toLocaleString()}</td></tr>`;}).join('');
+  persist();
+}
+
+/* ════════ 匯出 ════════ */
+function exportExcel(){
+  const ws=XLSX.utils.json_to_sheet(data.map(x=>({'姓名':x.name,'預約時間':x.time.replace('T',' '),'狀態':x.status,'方案':x.plan||'','金額':getPlanAmount(x)||'','聯絡事項':x.contact||'','備註':x.note||''})));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'學員清單');
+  XLSX.writeFile(wb,`Lily學員清單_${new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')}.xlsx`);
+}
+function exportSalesExcel(){
+  const n=new Date();
+  const deals=data.filter(x=>{const d=new Date(x.time);return x.status==='成交'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();});
+  const rows=deals.map(x=>({'日期':x.time.split('T')[0],'姓名':x.name,'購買方案':x.plan||'未設定','金額':getPlanAmount(x)}));
+  rows.push({'日期':'','姓名':'合計','購買方案':'','金額':rows.reduce((s,r)=>s+r['金額'],0)});
+  const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'本月成交');
+  XLSX.writeFile(wb,`Lily業績明細_${n.getFullYear()}-${n.getMonth()+1}.xlsx`);
+}
+
+/* ════════ 右鍵選單 ════════ */
+function showCtxMenu(e,id){
+  e.preventDefault();
+  const menu=document.getElementById('contextMenu');
+  menu.innerHTML=`<div onclick="openModal(${id});closeCtx()">✏️ 修改資料</div><hr><div class="danger" onclick="askDelete(${id});closeCtx()">🗑️ 移除學員</div>`;
+  menu.style.display='block';
+  menu.style.left=Math.min(e.clientX,innerWidth-160)+'px';
+  menu.style.top=Math.min(e.clientY,innerHeight-90)+'px';
+}
+function closeCtx(){document.getElementById('contextMenu').style.display='none';}
+document.addEventListener('click',closeCtx);
+
+/* ════════ Overlay ════════ */
+function openOverlay(which){
+  ['modal','statusModal','confirmBox','tplModal','savedQuotesModal'].forEach(id=>document.getElementById(id).style.display=(id===which)?'block':'none');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeOverlay(){document.getElementById('overlay').classList.remove('show');pendingDeleteId=null;}
+function handleOverlayClick(e){if(e.target===document.getElementById('overlay'))closeOverlay();}
+
+/* ════════ 方案選擇 ════════ */
+function clearPlanSel(){
+  document.querySelectorAll('.plan-btn').forEach(b=>b.classList.remove('selected'));
+  selectedPlanName=null;selectedPlanAmount=null;isCustomPlan=false;
+  document.getElementById('customRow').style.display='none';
+  document.getElementById('customPlanName').value='';
+  document.getElementById('customPlanAmount').value='';
+}
+function selectPlan(name,amount,btn){clearPlanSel();btn.classList.add('selected');selectedPlanName=name;selectedPlanAmount=amount;isCustomPlan=false;}
+function selectCustomPlan(btn){clearPlanSel();btn.classList.add('selected');isCustomPlan=true;selectedPlanName=null;document.getElementById('customRow').style.display='flex';document.getElementById('customPlanName').focus();}
+function onStatusChange(){document.getElementById('planSection').style.display=document.getElementById('mStatus').value==='成交'?'block':'none';}
+
+/* ════════ 學員 Modal ════════ */
+function openModal(id=null,defaultDate=null){
+  currentEditId=id?parseInt(id):null;
+  document.getElementById('modalTitle').textContent=currentEditId?'編輯學員':'新增學員';
+  document.getElementById('modalChip').textContent=currentEditId?'EDIT':'NEW';
+  const sel=document.getElementById('mStatus');
+  sel.innerHTML=statuses.map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
+  const item=data.find(x=>x.id==currentEditId);
+  document.getElementById('mName').value=item?item.name:'';
+  document.getElementById('mStatus').value=item?item.status:statuses[0].name;
+  document.getElementById('mContact').value=item?(item.contact||''):'';
+  document.getElementById('mNote').value=item?(item.note||''):'';
+  if(item){const[d,t]=item.time.split('T');document.getElementById('mDate').value=d;document.getElementById('mHour').value=t?t.split(':')[0]:'09';document.getElementById('mMin').value=t?t.split(':')[1]:'00';}
+  else{document.getElementById('mDate').value=defaultDate||new Date().toISOString().split('T')[0];document.getElementById('mHour').value='09';document.getElementById('mMin').value='00';}
+  clearPlanSel();onStatusChange();
+  if(item&&item.status==='成交'&&item.plan){
+    if(item.customAmount){selectCustomPlan(document.getElementById('customPlanBtn'));document.getElementById('customPlanName').value=item.plan;document.getElementById('customPlanAmount').value=item.customAmount;}
+    else document.querySelectorAll('.plan-btn:not(.custom-btn)').forEach(btn=>{if(btn.querySelector('.plan-name').textContent===item.plan)selectPlan(item.plan,FIXED_PLANS[item.plan],btn);});
+  }
+  openOverlay('modal');
+}
+
+/* ─── 從 Modal 開啟報價單 ─── */
+function openQuoteFromModal(){
+  const name=document.getElementById('mName').value.trim();
+  closeOverlay();
+  // 切換到報價頁
+  const tabEl=document.querySelector('.tab-item:nth-child(4)');
+  switchPage('quote-page',tabEl);
+  // 填入姓名
+  if(name) document.getElementById('qStudentName').value=name;
+}
+
+function saveData(){
+  const name=document.getElementById('mName').value.trim();if(!name){alert('請輸入姓名');return;}
+  const status=document.getElementById('mStatus').value;
+  let planName=null,customAmount=null;
+  if(status==='成交'){
+    if(isCustomPlan){planName=document.getElementById('customPlanName').value.trim()||'自訂課程';const amt=parseInt(document.getElementById('customPlanAmount').value)||0;if(amt<=0){alert('請輸入有效金額');return;}customAmount=amt;}
+    else{if(!selectedPlanName){alert('請選擇課程方案');return;}planName=selectedPlanName;}
+  }
+  const item={id:currentEditId||Date.now(),name,status,plan:planName,customAmount,time:`${document.getElementById('mDate').value}T${document.getElementById('mHour').value}:${document.getElementById('mMin').value}`,contact:document.getElementById('mContact').value,note:document.getElementById('mNote').value};
+  if(currentEditId)data[data.findIndex(x=>x.id==currentEditId)]=item;else data.push(item);
+  persist();closeOverlay();refreshCal();renderBoard();renderList();updateSalesUI();
+}
+
+/* ════════ 刪除 ════════ */
+function askDelete(id){pendingDeleteId=id;const item=data.find(x=>x.id==id);document.getElementById('confirmMsg').textContent=`確定要移除「${item?item.name:'此學員'}」嗎？此操作無法復原。`;openOverlay('confirmBox');}
+function confirmDelete(){if(pendingDeleteId!=null){data=data.filter(x=>x.id!=pendingDeleteId);persist();closeOverlay();refreshCal();renderBoard();renderList();updateSalesUI();pendingDeleteId=null;}}
+function deleteItem(id){askDelete(id);}
+
+/* ════════ 狀態管理 ════════ */
+function openStatusManager(){renderStatusList();openOverlay('statusModal');}
+function renderStatusList(){document.getElementById('statusList').innerHTML=statuses.map((s,i)=>`<div class="status-item"><div class="status-swatch" style="background:${s.color}" onclick="pickColor(${i},this)"></div><span class="status-name">${esc(s.name)}</span><span class="status-count">${data.filter(x=>x.status===s.name).length} 人</span><button class="status-del" onclick="removeStatus(${i})">×</button></div>`).join('');}
+function addStatus(){const name=document.getElementById('newStatusName').value.trim(),color=document.getElementById('newStatusColor').value;if(!name)return;if(statuses.find(s=>s.name===name)){alert('此狀態已存在');return;}statuses.push({name,color});document.getElementById('newStatusName').value='';persist();renderStatusList();renderBoard();}
+function removeStatus(i){const s=statuses[i];if(data.some(x=>x.status===s.name)){if(!confirm(`「${s.name}」有${data.filter(x=>x.status===s.name).length}位學員，確定刪除？`))return;data.filter(x=>x.status===s.name).forEach(x=>x.status='');}statuses.splice(i,1);persist();renderStatusList();renderBoard();refreshCal();}
+function pickColor(i,el){const inp=document.createElement('input');inp.type='color';inp.value=statuses[i].color;inp.oninput=e=>{statuses[i].color=e.target.value;el.style.background=e.target.value;};inp.onchange=()=>{persist();renderBoard();refreshCal();};inp.click();}
+
+/* ════════════════════════════════════════
+   勤學活動預設資料（依群組）
+════════════════════════════════════════ */
+const Q_DIL_DEFAULTS = {
+  KIDS: [
+    { period:'連續8周', plan:'輕鬆學(以上)', weekly:2, bonuses:[1,5] },
+    { period:'連續8周', plan:'輕鬆學(以上)', weekly:3, bonuses:[3,5] },
+    { period:'連續8周', plan:'進階學(以上)', weekly:4, bonuses:[6,10] },
+  ],
+  Junior: [
+    { period:'連續8周', plan:'輕鬆學(以上)', weekly:2, bonuses:[2] },
+    { period:'連續8周', plan:'輕鬆學(以上)', weekly:3, bonuses:[4] },
+    { period:'連續8周', plan:'進階學(以上)', weekly:4, bonuses:[8] },
+  ],
+};
+const Q_TEMPLATES = {
+  KIDS: [
+    { name:'輕鬆學',   months:24, total:120, prog:80,  elec:15, magic:25, gifts:[0,0], monthly:2850, price:68400,  perClass:489, bonusOnePay:5,  bonusMagic:20 },
+    { name:'進階學',   months:24, total:175, prog:120, elec:25, magic:30, gifts:[0,0], monthly:3850, price:92400,  perClass:462, bonusOnePay:8,  bonusMagic:25 },
+    { name:'小夢想家', months:24, total:240, prog:160, elec:40, magic:40, gifts:[0,0], monthly:4850, price:116400, perClass:423, bonusOnePay:12, bonusMagic:35 },
+    { name:'大夢想家', months:24, total:295, prog:200, elec:50, magic:45, gifts:[0,0], monthly:5850, price:140400, perClass:413, bonusOnePay:16, bonusMagic:45 },
+    { name:'體驗學',   months:12, total:65,  prog:40,  elec:5,  magic:20, gifts:[0,0], monthly:3200, price:38400,  perClass:512, bonusOnePay:0,  bonusMagic:10 },
+  ],
+  Junior: [
+    { name:'輕鬆學',   months:24, total:100, prog:80,  elec:20, magic:0, gifts:[4], monthly:2850, price:68400,  perClass:658, bonusOnePay:5,  bonusMagic:0 },
+    { name:'進階學',   months:24, total:150, prog:120, elec:30, magic:0, gifts:[5], monthly:3850, price:92400,  perClass:596, bonusOnePay:8,  bonusMagic:0 },
+    { name:'小夢想家', months:24, total:206, prog:160, elec:46, magic:0, gifts:[7], monthly:4850, price:116400, perClass:546, bonusOnePay:12, bonusMagic:0 },
+    { name:'大夢想家', months:24, total:260, prog:200, elec:60, magic:0, gifts:[9], monthly:5850, price:140400, perClass:522, bonusOnePay:16, bonusMagic:0 },
+    { name:'體驗學',   months:12, total:49,  prog:40,  elec:9,  magic:0, gifts:[2], monthly:3200, price:38400,  perClass:753, bonusOnePay:0,  bonusMagic:0 },
+  ]
+};
+
+/* ════════════════════════════════════════
+   報價單邏輯（動態贈送欄）
+   qGiftCols / qPlans / qDils 在底部初始化
+════════════════════════════════════════ */
+
+/* ── 贈送欄顏色設定 ── */
+const GIFT_THEMES = {
+  elec:  { th:'background:#fffbeb;color:#b45309', td:'color:#b45309', total:'color:#b45309;font-weight:900' },
+  magic: { th:'background:#ecfdf5;color:#065f46', td:'color:#065f46', total:'color:#065f46;font-weight:900' },
+  gift:  { th:'background:#fef9c3;color:#e53935', td:'color:#e53935', total:'color:#e53935;font-weight:900' },
+};
+function giftTheme(color, part){ return (GIFT_THEMES[color]||GIFT_THEMES.gift)[part]; }
+
+/* ── 模板選單 ── */
+function openTplPicker(group){
+  const grid = document.getElementById('tplGrid');
+  const title = document.querySelector('.tpl-modal-title');
+  title.textContent = `📋 選擇${group}方案模板`;
+  grid.innerHTML = '';
+
+  Q_TEMPLATES[group].forEach((t,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'tpl-card';
+    const hasMagic = t.magic > 0;
+    btn.innerHTML = `
+      <div class="tpl-name">${esc(t.name)}</div>
+      <div class="tpl-meta">
+        <span class="tpl-tag months">${t.months}個月</span>
+        <span class="tpl-tag">${t.total} 堂</span>
+        <span class="tpl-tag prog">進度班 ${t.prog}</span>
+        <span class="tpl-tag elec">選修 ${t.elec}</span>
+        ${hasMagic?`<span class="tpl-tag magic">魔法屋 ${t.magic}</span>`:''}
+        <span class="tpl-tag price">NT$${t.price.toLocaleString()}</span>
+      </div>`;
+    btn.onclick = ()=>{ applyTemplate(group,i); closeOverlay(); };
+    grid.appendChild(btn);
+  });
+
+  // 空白方案
+  const blank = document.createElement('button');
+  blank.className = 'tpl-card blank';
+  blank.style.cssText='grid-column:1/-1';
+  blank.innerHTML = `<div class="tpl-name">✏️ 空白方案</div><div style="font-size:12px;margin-top:4px">自行填入所有數字</div>`;
+  blank.onclick = ()=>{
+    qPlans.push({name:'新方案',months:24,total:0,prog:0,elec:0,magic:0,gifts:qGiftCols.map(()=>0),monthly:0,price:0,perClass:0,bonusOnePay:0,bonusMagic:0});
+    closeOverlay(); renderQPlan();
+    const rows=document.getElementById('qPlanBody').querySelectorAll('tr');
+    if(rows.length) rows[rows.length-1].querySelector('input').focus();
+  };
+  grid.appendChild(blank);
+  openOverlay('tplModal');
+}
+
+function applyTemplate(group, ti){
+  const t = Q_TEMPLATES[group][ti];
+
+  // 第一次加入某群組方案時，同步更新贈送欄 + 勤學活動
+  if(qPlans.length === 0){
+    if(group === 'KIDS'){
+      qGiftCols = [{label:'加贈選修課',color:'elec'},{label:'加贈魔法屋',color:'magic'}];
+    } else {
+      qGiftCols = [{label:'加贈選修課',color:'elec'}];
+    }
+    // 帶入對應勤學活動預設值
+    qDils = Q_DIL_DEFAULTS[group].map(d=>({...d, bonuses:[...d.bonuses]}));
+    renderQDil();
+  }
+
+  qPlans.push({
+    name:t.name, months:t.months, total:t.total,
+    prog:t.prog, elec:t.elec, magic:t.magic,
+    gifts: qGiftCols.map((_,gi)=> (t.gifts||[])[gi]||0 ),
+    monthly:t.monthly, price:t.price,
+    perClass:t.perClass, bonusOnePay:t.bonusOnePay, bonusMagic:t.bonusMagic
+  });
+  renderQPlan();
+}
+
+/* ── 渲染整個方案表格（含動態欄 + 金額欄） ── */
+function renderQPlan(){
+  const gc = qGiftCols;
+
+  // 欄寬：使用 min-width 讓欄位可以展開填滿
+  let colgroup = `<col style="min-width:120px"><col style="min-width:65px"><col style="min-width:75px">
+    <col style="min-width:80px"><col style="min-width:80px"><col style="min-width:80px">`;
+  gc.forEach(()=>{ colgroup += `<col style="min-width:110px">`; });
+  // 金額欄
+  colgroup += `<col style="min-width:90px"><col style="min-width:100px"><col style="min-width:90px"><col style="width:36px">`;
+
+  // 主表頭
+  let th1 = `
+    <th rowspan="2" style="text-align:left;padding-left:14px">方案名稱</th>
+    <th rowspan="2">月數</th>
+    <th rowspan="2">總堂數</th>
+    <th rowspan="2" class="th-prog">進度班<br><small style="font-size:9px;font-weight:500">方案堂數</small></th>
+    <th rowspan="2" class="th-elec">選修課<br><small style="font-size:9px;font-weight:500">方案堂數</small></th>
+    <th rowspan="2" class="th-magic">魔法屋<br><small style="font-size:9px;font-weight:500">方案堂數</small></th>`;
+  gc.forEach((g,gi)=>{
+    const t = giftTheme(g.color,'th');
+    th1 += `<th style="${t};position:relative;padding:7px 4px">
+      <div style="display:flex;align-items:center;justify-content:center;gap:2px">
+        <input value="${esc(g.label)}" oninput="qGiftCols[${gi}].label=this.value"
+          style="background:transparent;border:none;border-bottom:1px dashed currentColor;outline:none;font-size:11px;font-weight:700;color:inherit;text-align:center;width:100%;min-width:0;cursor:text;font-family:var(--font-tc);padding:2px 0">
+        <span style="cursor:pointer;font-size:12px;opacity:.4;line-height:1;flex-shrink:0" onclick="delQGiftCol(${gi})" title="刪除">✕</span>
+      </div>
+      <select onchange="qGiftCols[${gi}].color=this.value;renderQPlan()"
+        style="margin-top:2px;font-size:9px;border:none;background:rgba(0,0,0,0.06);border-radius:3px;padding:1px 2px;cursor:pointer;width:100%">
+        <option value="elec" ${g.color==='elec'?'selected':''}>選修課色</option>
+        <option value="magic" ${g.color==='magic'?'selected':''}>魔法屋色</option>
+        <option value="gift" ${g.color==='gift'?'selected':''}>贈送紅色</option>
+      </select>
+    </th>`;
+  });
+  // 金額欄表頭
+  th1 += `
+    <th rowspan="2" style="background:#fef9ec;color:#92400e">月付<br><small style="font-size:9px;font-weight:500">八折後</small></th>
+    <th rowspan="2" style="background:#fff1f2;color:#9f1239">總價<br><small style="font-size:9px;font-weight:500">NT$</small></th>
+    <th rowspan="2" style="background:#fff1f2;color:#9f1239">一付加贈<br><small style="font-size:9px;font-weight:500">選修課</small></th>
+    <th rowspan="2" style="background:#f8fafc"></th>`;
+
+  const html = `<table class="q-table">
+    <colgroup>${colgroup}</colgroup>
+    <thead><tr>${th1}</tr></thead>
+    <tbody id="qPlanBody"></tbody>
+  </table>`;
+
+  document.getElementById('qPlanTableWrap').innerHTML = html;
+
+  // 渲染資料列
+  const tbody = document.getElementById('qPlanBody');
+  qPlans.forEach((p,i)=>{
+    while((p.gifts||[]).length < gc.length)(p.gifts=p.gifts||[]).push(0);
+    const tr = document.createElement('tr');
+    let giftCells = '';
+    gc.forEach((g,gi)=>{
+      const t = giftTheme(g.color,'td');
+      giftCells += `<td><input type="number" value="${(p.gifts||[])[gi]||0}" min="0" class="qnum gift-num" style="${t}" oninput="qPlans[${i}].gifts[${gi}]=+this.value;recalcRow(${i})"></td>`;
+    });
+    const grandTotal = (p.total||0) + (p.gifts||[]).reduce((a,b)=>a+b,0);
+    tr.innerHTML = `
+      <td class="qtd-name"><input value="${esc(p.name)}" placeholder="方案名稱" oninput="qPlans[${i}].name=this.value"></td>
+      <td class="qtd-months"><input type="number" value="${p.months||24}" min="1" class="qnum" oninput="qPlans[${i}].months=+this.value"></td>
+      <td><span class="qnum" style="font-weight:900;color:var(--text)" id="qgt-${i}">${grandTotal}</span></td>
+      <td><input type="number" value="${p.prog||0}"  min="0" class="qnum" oninput="qPlans[${i}].prog=+this.value;recalcRow(${i})"></td>
+      <td><input type="number" value="${p.elec||0}"  min="0" class="qnum" oninput="qPlans[${i}].elec=+this.value;recalcRow(${i})"></td>
+      <td><input type="number" value="${p.magic||0}" min="0" class="qnum" oninput="qPlans[${i}].magic=+this.value;recalcRow(${i})"></td>
+      ${giftCells}
+      <td><input type="number" value="${p.monthly||0}" min="0" class="qnum" style="color:#92400e" oninput="qPlans[${i}].monthly=+this.value"></td>
+      <td><input type="number" value="${p.price||0}" min="0" class="qnum" style="color:#9f1239" oninput="qPlans[${i}].price=+this.value"></td>
+      <td><input type="number" value="${p.bonusOnePay||0}" min="0" class="qnum" style="color:#9f1239" oninput="qPlans[${i}].bonusOnePay=+this.value"></td>
+      <td class="qtd-del"><button onclick="delQPlan(${i})" title="刪除">✕</button></td>`;
+    tbody.appendChild(tr);
+  });
+
+}
+
+/* 重新計算某列的總堂數（方案堂數 + 所有贈送堂數） */
+function recalcRow(i){
+  const p = qPlans[i];
+  p.total = (p.prog||0) + (p.elec||0) + (p.magic||0);
+  const grandTotal = p.total + (p.gifts||[]).reduce((a,b)=>a+b,0);
+  const el = document.getElementById('qgt-'+i);
+  if(el) el.textContent = grandTotal;
+}
+
+function addQPlan(){
+  qPlans.push({name:'新方案',months:24,total:0,prog:0,elec:0,magic:0,gifts:qGiftCols.map(()=>0)});
+  renderQPlan();
+  const rows=document.getElementById('qPlanBody').querySelectorAll('tr');
+  rows[rows.length-1].querySelector('input').focus();
+}
+function delQPlan(i){
+  if(qPlans.length<=1&&!confirm('確定刪除最後一個方案？'))return;
+  qPlans.splice(i,1);renderQPlan();
+}
+function addQGiftCol(){
+  qGiftCols.push({label:'新贈送欄',color:'gift'});
+  qPlans.forEach(p=>{ (p.gifts=p.gifts||[]).push(0); });
+  renderQPlan();
+}
+function delQGiftCol(gi){
+  if(!confirm(`確定刪除「${qGiftCols[gi].label}」這個贈送欄？`))return;
+  qGiftCols.splice(gi,1);
+  qPlans.forEach(p=>{ if(p.gifts) p.gifts.splice(gi,1); });
+  renderQPlan();
+}
+
+/* ── 勤學活動（贈送欄也跟著動態） ── */
+function renderQDil(){
+  const gc = qGiftCols;
+  let colgroup = `<col style="width:115px"><col style="width:138px"><col style="width:78px">`;
+  gc.forEach(()=>{colgroup+=`<col style="width:88px">`;});
+  colgroup+=`<col style="width:76px"><col style="width:34px">`;
+
+  let heads = `<th>期間</th><th>適用方案</th><th>每周堂數</th>`;
+  gc.forEach(g=>{ heads+=`<th style="${giftTheme(g.color,'th')}">加贈<br>${esc(g.label)}</th>`; });
+  heads+=`<th>總共</th><th class="no-print"></th>`;
+
+  let rows = '';
+  qDils.forEach((d,i)=>{
+    while((d.bonuses||[]).length < gc.length) (d.bonuses=d.bonuses||[]).push(0);
+    const total=(d.bonuses||[]).reduce((a,b)=>a+b,0);
+    let bonusCells='';
+    gc.forEach((g,gi)=>{
+      bonusCells+=`<td class="dn" style="${giftTheme(g.color,'td')}"><input class="di" type="number" value="${(d.bonuses||[])[gi]||0}" min="0" oninput="qDils[${i}].bonuses[${gi}]=+this.value;renderQDil()"></td>`;
+    });
+    rows+=`<tr>
+      <td class="dp"><input class="di" value="${esc(d.period)}" placeholder="連續8周" oninput="qDils[${i}].period=this.value"></td>
+      <td><input class="di" value="${esc(d.plan)}" placeholder="適用方案" oninput="qDils[${i}].plan=this.value"></td>
+      <td class="dn"><input class="di" type="number" value="${d.weekly}" min="0" oninput="qDils[${i}].weekly=+this.value;renderQDil()"></td>
+      ${bonusCells}
+      <td class="dtotal">${total}</td>
+      <td class="no-print" style="text-align:center"><button onclick="delQDil(${i})" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:14px;padding:2px 4px;border-radius:4px" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#cbd5e1'">✕</button></td>
+    </tr>`;
+  });
+
+  document.getElementById('qDilTableWrap').innerHTML=`<table class="dil-table">
+    <colgroup>${colgroup}</colgroup>
+    <thead><tr>${heads}</tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function applyDilTemplate(group){
+  const defs = Q_DIL_DEFAULTS[group];
+  if(!defs) return;
+  if(qDils.length > 0 && !confirm(`套用${group}範本會覆蓋目前的勤學活動，確定嗎？`)) return;
+  qDils = defs.map(d=>({...d, bonuses:[...d.bonuses]}));
+  // 同步贈送欄
+  if(group === 'KIDS' && qGiftCols.length < 2){
+    // KIDS 需要選修課 + 魔法屋兩個贈送欄
+    qGiftCols = [{label:'加贈選修課',color:'elec'},{label:'加贈魔法屋',color:'magic'}];
+    qPlans.forEach(p=>{ while((p.gifts||[]).length < 2)(p.gifts=p.gifts||[]).push(0); });
+    renderQPlan();
+  } else if(group === 'Junior'){
+    qGiftCols = [{label:'加贈選修課',color:'elec'}];
+    qPlans.forEach(p=>{ p.gifts = [(p.gifts||[])[0]||0]; });
+    renderQPlan();
+  }
+  renderQDil();
+}
+
+function addQDil(){
+  qDils.push({period:'連續8周',plan:'',weekly:0,bonuses:qGiftCols.map(()=>0)});
+  renderQDil();
+  const rows=document.getElementById('qDilTableWrap').querySelectorAll('tbody tr');
+  rows[rows.length-1].querySelector('input').focus();
+}
+function delQDil(i){qDils.splice(i,1);renderQDil();}
+
+/* ════════════════════════════════════════
+   訊息產生器
+════════════════════════════════════════ */
+const DEFAULT_MSG_TPL = `{姓名}媽媽感謝您今天撥冗體驗 ETalking Kids！
+以下是為我們剛剛討論的方案內容
+
+━━ 課程方案 ━━
+方案：{方案}
+合約期間：{月數} 個月
+月付款：NT$ {月付}（{月數}期零利率分期）
+~報名費：全額減免（省 NT$2,888）~
+
+━━ 本次優惠加贈 ━━
+{贈送項目}
+
+━━ 優惠截止日 ━━
+{截止日}
+
+━━ 報名流程 ━━
+① 確認方案與付款方式
+② 填寫學員基本資料
+③ 課程顧問產出合約，線上簽署確認
+④ 刷卡完成，排定首課時間
+
+以上如有任何問題，歡迎隨時聯繫！`;
+
+function initMsgTemplate(){
+  const tpl = document.getElementById('msgTemplate');
+  if(tpl && !tpl.value) tpl.value = DEFAULT_MSG_TPL;
+  // 預設截止日：7天後
+  const dl = document.getElementById('msgDeadline');
+  if(dl && !dl.value){
+    const d = new Date(); d.setDate(d.getDate()+7);
+    dl.value = d.toISOString().split('T')[0];
+  }
+}
+
+function toggleMsgTpl(){
+  const ed = document.getElementById('msgTplEditor');
+  const isHidden = ed.style.display === 'none';
+  ed.style.display = isHidden ? 'block' : 'none';
+  document.getElementById('msgTplToggle').textContent = isHidden ? '✏️ 收起模板' : '✏️ 編輯模板';
+  if(isHidden) initMsgTemplate();
+}
+
+function generateMsg(){
+  initMsgTemplate();
+  const name = document.getElementById('qStudentName').value.trim() || '___';
+  const tpl = document.getElementById('msgTemplate').value;
+  const giftsText = document.getElementById('msgGifts').value.trim();
+  const deadlineRaw = document.getElementById('msgDeadline').value;
+  const deadline = deadlineRaw ? deadlineRaw.replace(/-/g,'/') : '____/____/____';
+
+  if(qPlans.length === 0){
+    alert('請先新增至少一個方案');
+    return;
+  }
+
+  // 贈送項目格式化
+  const giftLines = giftsText
+    ? giftsText.split('\n').filter(l=>l.trim()).map(l=>'• '+l.trim()).join('\n')
+    : '• （請編輯模板填入贈送項目）';
+
+  // 每個方案各產生一段
+  const msgs = qPlans.map(p=>{
+    let msg = tpl;
+    msg = msg.replace(/\{姓名\}/g, name);
+    msg = msg.replace(/\{方案\}/g, p.name || '___');
+    msg = msg.replace(/\{月數\}/g, String(p.months || 24));
+    msg = msg.replace(/\{月付\}/g, (p.monthly||0).toLocaleString());
+    msg = msg.replace(/\{總價\}/g, (p.price||0).toLocaleString());
+    msg = msg.replace(/\{一付加贈\}/g, String(p.bonusOnePay || 0));
+    msg = msg.replace(/\{贈送項目\}/g, giftLines);
+    msg = msg.replace(/\{截止日\}/g, deadline);
+    return msg;
+  });
+
+  const fullMsg = msgs.join('\n\n─────────────────\n\n');
+
+  document.getElementById('msgPreview').textContent = fullMsg;
+  document.getElementById('msgOutput').style.display = 'block';
+
+  // 滾動到預覽區
+  document.getElementById('msgOutput').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function copyMsg(){
+  const text = document.getElementById('msgPreview').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✅ 已複製！';
+    setTimeout(()=>{ btn.textContent = '📋 複製全部'; }, 2000);
+  }).catch(()=>{
+    // fallback
+    const range = document.createRange();
+    range.selectNodeContents(document.getElementById('msgPreview'));
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(range);
+    document.execCommand('copy');
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✅ 已複製！';
+    setTimeout(()=>{ btn.textContent = '📋 複製全部'; }, 2000);
+  });
+}
+
+/* ════════════════════════════════════════
+   報價單儲存/載入（localStorage）
+   key: lily_quotes → [{id, name, date, data:{...}}]
+════════════════════════════════════════ */
+function getSavedQuotes(){
+  return JSON.parse(localStorage.getItem('lily_quotes'))||[];
+}
+function putSavedQuotes(list){
+  localStorage.setItem('lily_quotes', JSON.stringify(list));
+}
+
+async function saveQuote(){
+  const name = document.getElementById('qStudentName').value.trim();
+  if(!name){ alert('請先填入學員姓名'); return; }
+  if(qPlans.length===0){ alert('請先新增至少一個方案'); return; }
+
+  const planNames = qPlans.map(p=>p.name).join('、');
+  const snapshot = {
+    studentName: name,
+    giftCols: JSON.parse(JSON.stringify(qGiftCols)),
+    plans: JSON.parse(JSON.stringify(qPlans)),
+    dils: JSON.parse(JSON.stringify(qDils)),
+    remarks: document.getElementById('qRemarks').value,
+    msgGifts: document.getElementById('msgGifts').value,
+    msgTemplate: document.getElementById('msgTemplate').value,
+    msgDeadline: document.getElementById('msgDeadline').value,
+  };
+
+  const list = getSavedQuotes();
+  // 同名學員覆蓋
+  const existing = list.findIndex(q=>q.name===name);
+  const entry = {
+    id: existing>=0 ? list[existing].id : Date.now(),
+    name,
+    planNames,
+    date: new Date().toLocaleDateString('zh-TW'),
+    data: snapshot
+  };
+  if(existing>=0){
+    if(!confirm(`「${name}」已有儲存的報價，要覆蓋嗎？`)) return;
+    list[existing] = entry;
+  } else {
+    list.unshift(entry);
+  }
+  putSavedQuotes(list);
+  // 同步到雲端
+  setSyncStatus('儲存報價中...','var(--accent)');
+  try{ await cloudPost('saveQuote', entry); setSyncStatus('✓ 報價已同步','var(--success)'); setTimeout(()=>setSyncStatus('',''),3000); }
+  catch(e){ console.error('Quote cloud save error:',e); setSyncStatus('雲端儲存失敗（本地已存）','var(--danger)'); }
+  alert(`✅ 已儲存「${name}」的報價單`);
+}
+
+function loadQuoteList(){
+  const list = getSavedQuotes();
+  const container = document.getElementById('savedQuotesList');
+
+  if(list.length===0){
+    container.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);font-size:14px">還沒有儲存任何報價單</div>';
+    openOverlay('savedQuotesModal');
+    return;
+  }
+
+  container.innerHTML = list.map((q,i)=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--bg3);cursor:pointer;transition:border-color .15s,background .15s"
+      onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--accent-l)'"
+      onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg3)'"
+      onclick="loadQuote(${i})">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:14px;color:var(--text)">${esc(q.name)}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">${esc(q.planNames||'')} · ${esc(q.date)}</div>
+      </div>
+      <button onclick="event.stopPropagation();deleteQuote(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:4px;border-radius:6px;transition:color .15s"
+        onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--text3)'" title="刪除">🗑️</button>
+    </div>
+  `).join('');
+
+  openOverlay('savedQuotesModal');
+}
+
+function loadQuote(i){
+  const list = getSavedQuotes();
+  const q = list[i];
+  if(!q) return;
+
+  const d = q.data;
+  document.getElementById('qStudentName').value = d.studentName||'';
+  document.getElementById('qRemarks').value = d.remarks||'';
+  document.getElementById('msgGifts').value = d.msgGifts||'';
+  document.getElementById('msgTemplate').value = d.msgTemplate||'';
+  document.getElementById('msgDeadline').value = d.msgDeadline||'';
+
+  qGiftCols = d.giftCols || [{label:'加贈選修課',color:'elec'}];
+  qPlans = d.plans || [];
+  qDils = d.dils || [];
+
+  // 隱藏訊息產出區
+  document.getElementById('msgOutput').style.display='none';
+
+  closeOverlay();
+  renderQPlan();
+  renderQDil();
+}
+
+async function deleteQuote(i){
+  const list = getSavedQuotes();
+  const q = list[i];
+  if(!confirm(`確定刪除「${q.name}」的報價單？`)) return;
+  list.splice(i,1);
+  putSavedQuotes(list);
+  // 雲端刪除
+  try{ await cloudGet('deleteQuote&id='+q.id); }catch(e){ console.error(e); }
+  loadQuoteList();
+}
+
+function resetQuote(){
+  if(!confirm('確定要重置報價單？'))return;
+  document.getElementById('qStudentName').value='';
+  document.getElementById('qRemarks').value='';
+  document.getElementById('msgGifts').value='';
+  document.getElementById('msgTemplate').value='';
+  document.getElementById('msgDeadline').value='';
+  document.getElementById('msgOutput').style.display='none';
+  document.getElementById('msgTplEditor').style.display='none';
+  document.getElementById('msgTplToggle').textContent='✏️ 編輯模板';
+  qGiftCols=[{label:'加贈選修課',color:'elec'}];
+  qPlans=[];
+  qDils=[
+    {period:'連續8周',plan:'輕鬆學(以上)',weekly:2,bonuses:[1]},
+    {period:'連續8周',plan:'輕鬆學(以上)',weekly:3,bonuses:[3]},
+    {period:'連續8周',plan:'進階學(以上)',weekly:4,bonuses:[6]},
+  ];
+  renderQPlan();renderQDil();
+}
+
+/* ════════ 初始化 ════════ */
+document.getElementById('monthlyGoal').value=localStorage.getItem('lily_goal')||300000;
+let qGiftCols = [{label:'加贈選修課',color:'elec'}];
+let qPlans = [];
+let qDils = [
+  {period:'連續8周',plan:'輕鬆學(以上)',weekly:2,bonuses:[1]},
+  {period:'連續8周',plan:'輕鬆學(以上)',weekly:3,bonuses:[3]},
+  {period:'連續8周',plan:'進階學(以上)',weekly:4,bonuses:[6]},
+];
+initCal();renderBoard();renderQPlan();renderQDil();
+
+// 啟動時自動從雲端拉取最新資料
+pullFromCloud().catch(e=>{ console.log('Initial cloud sync skipped:',e); });
+</script>
+</body>
+</html>
