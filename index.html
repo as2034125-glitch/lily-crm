@@ -373,9 +373,67 @@ table.dil-table{width:100%;border-collapse:collapse;}
   .q-header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   .q-table th,.dil-table th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
+/* ══════════════════════════════════════
+   登入畫面
+══════════════════════════════════════ */
+.login-screen{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;
+}
+.login-box{
+  background:var(--bg2);border:1px solid var(--border);border-radius:18px;
+  box-shadow:0 12px 48px rgba(15,23,42,.12);
+  padding:40px 36px;width:360px;max-width:90vw;text-align:center;
+  animation:modalIn .3s cubic-bezier(.34,1.2,.64,1);
+}
+.login-box .login-logo{
+  width:48px;height:48px;border-radius:14px;margin:0 auto 16px;
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent-d) 100%);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(14,165,233,.3);
+}
+.login-box .login-logo svg{width:22px;height:22px;fill:white;}
+.login-box h2{font-family:var(--font-en);font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.login-box h2 span{color:var(--accent);}
+.login-box p{font-size:13px;color:var(--text3);margin-bottom:24px;}
+.login-box input{
+  width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;
+  font-size:15px;color:var(--text);background:var(--bg3);outline:none;
+  text-align:center;font-family:var(--font-en);letter-spacing:1px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.login-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-l);background:var(--bg2);}
+.login-box button{
+  width:100%;margin-top:14px;padding:12px;border:none;border-radius:10px;
+  background:var(--accent);color:white;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:var(--font-tc);
+  box-shadow:0 4px 12px rgba(14,165,233,.3);
+  transition:opacity .15s,transform .1s;
+}
+.login-box button:hover{opacity:.88;}
+.login-box button:active{transform:scale(.97);}
+.login-error{color:var(--danger);font-size:13px;margin-top:10px;display:none;}
+.app-wrap{display:none;}
+.app-wrap.unlocked{display:contents;}
 </style>
 </head>
 <body>
+
+<!-- 登入畫面 -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <div class="login-logo"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+    <h2>Lily · <span>戰情室</span></h2>
+    <p>請輸入密碼以繼續</p>
+    <input type="password" id="loginPwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">登入</button>
+    <div class="login-error" id="loginError">密碼錯誤，請重新輸入</div>
+  </div>
+</div>
+
+<!-- 主要 APP（登入後才顯示）-->
+<div id="appWrap" class="app-wrap">
 
 <header>
   <div class="header-logo">
@@ -672,7 +730,32 @@ table.dil-table{width:100%;border-collapse:collapse;}
   </div>
 </div>
 
+</div><!-- /appWrap -->
+
 <script>
+/* ════════ 登入驗證 ════════ */
+const LOGIN_PWD = 'etalkingtopsales';
+
+function doLogin(){
+  const pwd = document.getElementById('loginPwd').value;
+  if(pwd === LOGIN_PWD){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('appWrap').classList.add('unlocked');
+    sessionStorage.setItem('lily_logged_in','1');
+    initApp();
+  } else {
+    document.getElementById('loginError').style.display='block';
+    document.getElementById('loginPwd').value='';
+    document.getElementById('loginPwd').focus();
+  }
+}
+
+// 同一個瀏覽器分頁期間記住登入狀態
+if(sessionStorage.getItem('lily_logged_in')==='1'){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appWrap').classList.add('unlocked');
+}
+
 /* ════════ CRM 資料 ════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbwaJfQsr2zKC7BW1v7-fqCFeTCAojuNQJmu1i712BcSONgrqbnzq4nQn36xDsgBo2g-JQ/exec';
 const API_KEY = 'd2e4cf110dd9399d73089d3bb3fd2072';
@@ -1534,7 +1617,6 @@ function resetQuote(){
 }
 
 /* ════════ 初始化 ════════ */
-document.getElementById('monthlyGoal').value=localStorage.getItem('lily_goal')||300000;
 let qGiftCols = [{label:'加贈選修課',color:'elec'}];
 let qPlans = [];
 let qDils = [
@@ -1542,10 +1624,16 @@ let qDils = [
   {period:'連續8周',plan:'輕鬆學(以上)',weekly:3,bonuses:[3]},
   {period:'連續8周',plan:'進階學(以上)',weekly:4,bonuses:[6]},
 ];
-initCal();renderBoard();renderQPlan();renderQDil();
 
-// 啟動時自動從雲端拉取最新資料
-pullFromCloud().catch(e=>{ console.log('Initial cloud sync skipped:',e); });
+function initApp(){
+  document.getElementById('monthlyGoal').value=localStorage.getItem('lily_goal')||300000;
+  initCal();renderBoard();renderQPlan();renderQDil();
+  // 啟動時自動從雲端拉取最新資料
+  pullFromCloud().catch(e=>{ console.log('Initial cloud sync skipped:',e); });
+}
+
+// 如果已經登入過，直接初始化
+if(sessionStorage.getItem('lily_logged_in')==='1'){ initApp(); }
 </script>
 </body>
 </html>
