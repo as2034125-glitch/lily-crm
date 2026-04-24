@@ -675,6 +675,7 @@ table.dil-table{width:100%;border-collapse:collapse;}
 <script>
 /* ════════ CRM 資料 ════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbwaJfQsr2zKC7BW1v7-fqCFeTCAojuNQJmu1i712BcSONgrqbnzq4nQn36xDsgBo2g-JQ/exec';
+const API_KEY = 'd2e4cf110dd9399d73089d3bb3fd2072';
 let data     = JSON.parse(localStorage.getItem("lily_crm_vFinal"))        || [];
 let statuses = JSON.parse(localStorage.getItem("lily_crm_status_vFinal")) || [
   {name:"已邀約",color:"#54a0ff"},{name:"未DEMO",color:"#ff9f43"},
@@ -730,10 +731,10 @@ function jsonpRequest(url){
 
 async function cloudPost(action, body){
   const encoded = encodeURIComponent(JSON.stringify(body));
-  return jsonpRequest(API_URL+'?action='+action+'&payload='+encoded);
+  return jsonpRequest(API_URL+'?action='+action+'&key='+API_KEY+'&payload='+encoded);
 }
 async function cloudGet(action){
-  return jsonpRequest(API_URL+'?action='+action);
+  return jsonpRequest(API_URL+'?action='+action+'&key='+API_KEY);
 }
 
 // 上傳到雲端（背景執行，不阻塞UI）
