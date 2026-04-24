@@ -691,22 +691,49 @@ let selectedPlanName=null,selectedPlanAmount=null,isCustomPlan=false;
 let calendarInstance=null;
 let isSyncing=false;
 
-/* ════════ 雲端同步 ════════ */
+/* ════════ 雲端同步（JSONP 方式，完全繞過 CORS）════════ */
 function setSyncStatus(msg, color){
   const el=document.getElementById('syncStatus');
   if(el){el.textContent=msg; el.style.color=color||'var(--text3)';}
 }
 
+// JSONP 請求：用 script 標籤載入，完全不受 CORS 限制
+let jsonpCounter = 0;
+function jsonpRequest(url){
+  return new Promise((resolve, reject)=>{
+    const cbName = '_jsonp_cb_' + (jsonpCounter++);
+    const timeout = setTimeout(()=>{
+      delete window[cbName];
+      script.remove();
+      reject(new Error('Request timeout'));
+    }, 15000);
+
+    window[cbName] = function(data){
+      clearTimeout(timeout);
+      delete window[cbName];
+      script.remove();
+      resolve(data);
+    };
+
+    const sep = url.includes('?') ? '&' : '?';
+    const script = document.createElement('script');
+    script.src = url + sep + 'callback=' + cbName;
+    script.onerror = ()=>{
+      clearTimeout(timeout);
+      delete window[cbName];
+      script.remove();
+      reject(new Error('Script load error'));
+    };
+    document.body.appendChild(script);
+  });
+}
+
 async function cloudPost(action, body){
-  // Apps Script 用 GET + URL encoded data 避免 CORS 問題
   const encoded = encodeURIComponent(JSON.stringify(body));
-  const url = API_URL+'?action='+action+'&payload='+encoded;
-  const res = await fetch(url, { method:'GET' });
-  return res.json();
+  return jsonpRequest(API_URL+'?action='+action+'&payload='+encoded);
 }
 async function cloudGet(action){
-  const res = await fetch(API_URL+'?action='+action);
-  return res.json();
+  return jsonpRequest(API_URL+'?action='+action);
 }
 
 // 上傳到雲端（背景執行，不阻塞UI）
