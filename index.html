@@ -1098,6 +1098,7 @@ table.dil-table{width:100%;border-collapse:collapse;}
   <div style="display:flex;align-items:center;gap:8px">
     <span id="syncStatus" style="font-size:11px;color:var(--text3);font-family:var(--font-en)"></span>
     <button class="btn btn-ghost btn-sm" onclick="cloudSync()" id="syncBtn" style="font-size:12px;padding:5px 10px">☁️ 同步</button>
+    <button class="btn btn-ghost btn-sm" onclick="toggleSyncDebug()" style="font-size:11px;padding:4px 8px;opacity:.6" title="同步診斷">🔍</button>
   </div>
 </header>
 
@@ -1368,6 +1369,19 @@ table.dil-table{width:100%;border-collapse:collapse;}
 <div id="contextMenu" class="context-menu"></div>
 
 <!-- Overlay -->
+<!-- 同步診斷面板 -->
+<div id="syncDebugPanel" style="display:none;position:fixed;bottom:20px;right:20px;width:480px;max-width:95vw;background:#0f172a;border-radius:12px;padding:16px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <span style="color:#38bdf8;font-size:12px;font-weight:700;font-family:monospace">🔍 同步診斷 Log</span>
+    <div style="display:flex;gap:6px">
+      <button onclick="testSyncConnection()" style="background:#1e40af;border:none;color:#93c5fd;font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:monospace">測試連線</button>
+      <button onclick="checkPayloadSize()" style="background:#065f46;border:none;color:#6ee7b7;font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:monospace">檢查資料量</button>
+      <button onclick="toggleSyncDebug()" style="background:#1e293b;border:none;color:#64748b;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer">✕</button>
+    </div>
+  </div>
+  <textarea id="syncDebugLog" readonly style="width:100%;height:180px;background:#020617;color:#94a3b8;font-family:monospace;font-size:11px;border:1px solid #1e293b;border-radius:6px;padding:8px;resize:none;box-sizing:border-box" placeholder="點「測試連線」開始診斷..."></textarea>
+</div>
+
 <div id="overlay" class="overlay" onclick="handleOverlayClick(event)">
   <!-- 學員 Modal -->
   <div id="modal" class="modal" onclick="event.stopPropagation()">
@@ -1597,31 +1611,45 @@ function setSyncStatus(msg, color){
   if(el){el.textContent=msg; el.style.color=color||'var(--text3)';}
 }
 
+// 同步診斷 log（顯示在頁面上）
+function syncLog(msg){
+  console.log('[SYNC]', msg);
+  const el=document.getElementById('syncDebugLog');
+  if(el){ el.textContent = (el.textContent||'') + '\n' + new Date().toLocaleTimeString() + ' ' + msg; el.scrollTop=el.scrollHeight; }
+}
+
 // JSONP 請求：用 script 標籤載入，完全不受 CORS 限制
 let jsonpCounter = 0;
 function jsonpRequest(url){
   return new Promise((resolve, reject)=>{
     const cbName = '_jsonp_cb_' + (jsonpCounter++);
+    syncLog(`JSONP 發送: ${url.substring(0,80)}...`);
+
     const timeout = setTimeout(()=>{
       delete window[cbName];
-      script.remove();
+      if(script.parentNode) script.remove();
+      syncLog('❌ TIMEOUT（15秒沒回應）');
       reject(new Error('Request timeout'));
     }, 15000);
 
     window[cbName] = function(data){
       clearTimeout(timeout);
       delete window[cbName];
-      script.remove();
+      if(script.parentNode) script.remove();
+      syncLog(`✅ 收到回應: ${JSON.stringify(data).substring(0,60)}`);
       resolve(data);
     };
 
     const sep = url.includes('?') ? '&' : '?';
     const script = document.createElement('script');
-    script.src = url + sep + 'callback=' + cbName;
-    script.onerror = ()=>{
+    const fullUrl = url + sep + 'callback=' + cbName;
+    syncLog(`完整 URL 長度: ${fullUrl.length} 字元`);
+    script.src = fullUrl;
+    script.onerror = (e)=>{
       clearTimeout(timeout);
       delete window[cbName];
-      script.remove();
+      if(script.parentNode) script.remove();
+      syncLog(`❌ Script 載入失敗: ${e.type || e}`);
       reject(new Error('Script load error'));
     };
     document.body.appendChild(script);
@@ -1723,7 +1751,68 @@ function persist(){
 }
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-/* ════════ 頁面切換 ════════ */
+/* ════════ 同步診斷工具 ════════ */
+function toggleSyncDebug(){
+  const p=document.getElementById('syncDebugPanel');
+  p.style.display = p.style.display==='none' ? 'block' : 'none';
+}
+
+async function testSyncConnection(){
+  const log=document.getElementById('syncDebugLog');
+  log.textContent='';
+  syncLog('=== 開始診斷 ===');
+  syncLog(`API URL: ${API_URL.substring(0,60)}...`);
+  syncLog(`API KEY: ${API_KEY.substring(0,8)}...`);
+  syncLog(`瀏覽器: ${navigator.userAgent.substring(0,60)}`);
+  syncLog(`頁面來源: ${location.origin}`);
+
+  // 檢查 payload 大小
+  const studentPayload = encodeURIComponent(JSON.stringify(data)).length;
+  syncLog(`學員資料 payload: ${studentPayload} 字元 ${studentPayload>6000?'⚠️ 可能過大':'✓'}`);
+
+  syncLog('--- 發送測試 GET ---');
+  try{
+    const result = await Promise.race([
+      cloudGet('getStudents'),
+      new Promise((_,r)=>setTimeout(()=>r(new Error('手動 8 秒 timeout')),8000))
+    ]);
+    syncLog(`✅ GET 成功，收到 ${Array.isArray(result)?result.length:typeof result} 筆`);
+  }catch(e){
+    syncLog(`❌ GET 失敗: ${e.message}`);
+    if(e.message.includes('timeout')){
+      syncLog('→ Apps Script 沒有回應，可能原因：');
+      syncLog('  1. Apps Script 部署設定不是「任何人」可存取');
+      syncLog('  2. Google 帳號需要重新授權');
+      syncLog('  3. Script 本身有錯誤，請到 Apps Script 後台檢查');
+    }
+    if(e.message.includes('load error')){
+      syncLog('→ Script 載入被擋，可能原因：');
+      syncLog('  1. Apps Script URL 已失效（需重新部署）');
+      syncLog('  2. 網路問題或防火牆');
+    }
+  }
+  syncLog('=== 診斷完成 ===');
+}
+
+function checkPayloadSize(){
+  syncLog('=== 資料量檢查 ===');
+  const s1 = JSON.stringify(data).length;
+  const s2 = JSON.stringify(statuses).length;
+  const quotes = JSON.parse(localStorage.getItem('lily_quotes')||'[]');
+  const s3 = JSON.stringify(quotes).length;
+  syncLog(`學員資料: ${s1} 字元 (${data.length} 筆) ${s1>4000?'⚠️':'✓'}`);
+  syncLog(`狀態設定: ${s2} 字元 ${s2>2000?'⚠️':'✓'}`);
+  syncLog(`報價記錄: ${s3} 字元 (${quotes.length} 筆) ${s3>4000?'⚠️':'✓'}`);
+  const encoded = encodeURIComponent(JSON.stringify(data)).length;
+  syncLog(`學員 encoded payload: ${encoded} 字元`);
+  if(encoded > 6000){
+    syncLog('⚠️ Payload 超過 6000 字元，JSONP GET 可能失敗！');
+    syncLog('→ 建議重新部署 Apps Script 改用 POST 方式');
+  } else {
+    syncLog('✓ Payload 大小正常');
+  }
+  syncLog(`localStorage 總使用: ${JSON.stringify(localStorage).length} 字元`);
+}
 function switchPage(pageId,el){
   document.querySelectorAll('.page-content,.tab-item').forEach(x=>x.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');el.classList.add('active');
