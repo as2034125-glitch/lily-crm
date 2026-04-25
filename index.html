@@ -164,8 +164,62 @@ header{
 .q-header{
   background:var(--bg2);
   border-bottom:2px solid var(--accent);
-  padding:22px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+  padding:18px 28px 16px;
+  display:grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap:12px 24px;
 }
+.q-header-left{ grid-column:1; grid-row:1; display:flex;flex-direction:column;gap:6px; }
+.q-header-right{ grid-column:2; grid-row:1; text-align:right; }
+.q-header-bottom{
+  grid-column:1/-1; grid-row:2;
+  display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;
+  padding-top:10px;
+  border-top:1px solid var(--border);
+}
+
+/* 等級 badge 選單 */
+.q-level-wrap{ display:flex;align-items:center;gap:8px; }
+.q-level-label{ font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap; }
+.q-level-select{
+  appearance:none;-webkit-appearance:none;
+  background:var(--accent-l);
+  border:1.5px solid var(--accent);
+  color:var(--accent-d);
+  font-size:13px;font-weight:800;
+  font-family:var(--font-en);
+  border-radius:20px;
+  padding:4px 14px;
+  cursor:pointer;outline:none;
+  transition:background .15s,border-color .15s;
+}
+.q-level-select:focus{ background:#bae6fd;border-color:var(--accent-d); }
+.q-level-select option{ font-weight:600; }
+
+/* 老師評語 */
+.q-comment-wrap{ flex:1;min-width:220px; }
+.q-comment-label{ font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px; }
+.q-comment-input{
+  width:100%;
+  background:var(--bg2);
+  border:1.5px solid var(--border2);
+  border-radius:8px;
+  padding:7px 12px;
+  font-size:13px;
+  color:#1e293b;
+  font-family:var(--font-tc);
+  resize:vertical;
+  outline:none;
+  line-height:1.6;
+  transition:border-color .2s,background .2s;
+  min-height:56px;
+  overflow-y:visible;
+  display:block;
+  box-sizing:border-box;
+}
+.q-comment-input::placeholder{ color:#94a3b8; }
+.q-comment-input:focus{ border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-l); }
 .q-header-left{display:flex;flex-direction:column;gap:8px;}
 .q-header-left .ql{font-size:12px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.6px;}
 .q-sname-wrap{display:flex;align-items:center;gap:12px;}
@@ -374,6 +428,606 @@ table.dil-table{width:100%;border-collapse:collapse;}
   .q-table th,.dil-table th{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 }
 /* ══════════════════════════════════════
+   方案名片卡（Card View）
+══════════════════════════════════════ */
+
+/* 外層橫向容器：方案卡 + 推薦選修課並排 */
+.plan-row-wrap {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 18px 22px 0;
+}
+
+/* 左側：方案卡組 */
+.plan-cards-view {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  flex-shrink: 0;
+  padding-bottom: 14px;
+  align-content: flex-start;
+}
+
+/* 右側：推薦選修課面板（有方案時貼著卡片右側） */
+.elec-side-panel {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  background: linear-gradient(135deg,#fffbeb,#fefce8);
+  border: 1.5px solid #fde68a;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin-left: 14px;
+}
+.elec-side-panel.hidden { display: none; }
+
+.elec-side-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 8px;
+  border-bottom: 1px solid #fde68a;
+  flex-shrink: 0;
+}
+.elec-side-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* 格子卡片 */
+.elec-grid-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.elec-grid-empty {
+  padding: 20px 12px;
+  text-align: center;
+  color: var(--text3);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.elec-grid-card {
+  background: #fffdf5;
+  border: 1.5px solid #fde68a;
+  border-radius: 10px;
+  padding: 9px 11px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  transition: background .15s, border-color .15s;
+  position: relative;
+}
+.elec-grid-card:hover { background: #fef3c7; border-color: #f59e0b; }
+.elec-grid-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.elec-grid-body { flex: 1; min-width: 0; }
+.elec-grid-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #78350f;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.elec-grid-name a {
+  color: inherit;
+  text-decoration: none;
+  font-size: 12px;
+}
+.elec-grid-name a:hover { color: var(--accent); }
+.elec-grid-desc {
+  font-size: 10.5px;
+  color: #92400e;
+  line-height: 1.45;
+  opacity: .8;
+}
+.elec-grid-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #b45309;
+  font-size: 11px;
+  opacity: .4;
+  padding: 0;
+  flex-shrink: 0;
+  margin-top: 1px;
+  line-height: 1;
+  transition: opacity .15s;
+}
+.elec-grid-remove:hover { opacity: 1; }
+
+.plan-namecard {
+  position: relative;
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 0;
+  width: 220px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transition: transform .18s, box-shadow .18s;
+}
+.plan-namecard:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+
+/* 頂部色帶 */
+.pnc-top {
+  height: 6px;
+  background: linear-gradient(90deg, var(--accent), #38bdf8);
+}
+.pnc-top.gold { background: linear-gradient(90deg, #d97706, #f59e0b); }
+.pnc-top.purple { background: linear-gradient(90deg, #7c3aed, #a855f7); }
+.pnc-top.green { background: linear-gradient(90deg, #059669, #34d399); }
+
+.pnc-body { padding: 14px 16px 12px; }
+
+.pnc-name {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 2px;
+  letter-spacing: -.3px;
+}
+.pnc-months {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--font-en);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.pnc-rows { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.pnc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 9px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+.pnc-row-label { color: var(--text3); font-weight: 600; }
+.pnc-row-val { font-family: var(--font-en); font-weight: 800; color: var(--text); font-size: 13px; }
+.pnc-row.prog { background: #eff6ff; }
+.pnc-row.elec { background: #fffbeb; }
+.pnc-row.elec .pnc-row-val { color: #b45309; }
+.pnc-row.magic { background: #f0fdf4; }
+.pnc-row.magic .pnc-row-val { color: #065f46; }
+.pnc-row.gift-row { background: #fff1f2; }
+.pnc-row.gift-row .pnc-row-val { color: #e11d48; }
+.pnc-row.total-row { background: var(--bg3); border: 1px dashed var(--border2); }
+.pnc-row.total-row .pnc-row-val { color: var(--text); font-size: 14px; }
+
+.pnc-divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+.pnc-price-block { text-align: center; margin-bottom: 8px; }
+.pnc-monthly-label { font-size: 10px; color: var(--text3); font-weight: 700; letter-spacing: .4px; text-transform: uppercase; margin-bottom: 3px; }
+.pnc-monthly {
+  font-family: var(--font-en);
+  font-size: 26px;
+  font-weight: 900;
+  color: #b45309;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.pnc-monthly-sub { font-size: 10px; color: var(--text3); font-family: var(--font-en); margin-top: 2px; }
+.pnc-total {
+  display: inline-block;
+  background: #fff1f2;
+  color: #9f1239;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-family: var(--font-en);
+  font-weight: 800;
+  margin-top: 6px;
+}
+.pnc-bonus {
+  font-size: 11px;
+  color: #9f1239;
+  text-align: center;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* 刪除按鈕（右上角） */
+.pnc-del {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,.05);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+  line-height: 1;
+}
+.pnc-del:hover { background: #fee2e2; color: var(--danger); }
+
+/* 方案卡底部行動按鈕 */
+.plan-cards-actions {
+  padding: 0 22px 14px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 視圖切換 tabs */
+.q-view-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--bg3);
+  border-radius: 8px;
+  padding: 3px;
+}
+.q-view-btn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text3);
+  background: transparent;
+  transition: background .15s, color .15s;
+  font-family: var(--font-tc);
+}
+.q-view-btn.active {
+  background: var(--bg2);
+  color: var(--accent);
+  box-shadow: 0 1px 4px rgba(15,23,42,.08);
+}
+
+/* ══════════════════════════════════════
+   方案對比訊息格式
+══════════════════════════════════════ */
+.msg-format-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.msg-fmt-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--bg3);
+  color: var(--text3);
+  font-family: var(--font-tc);
+  transition: all .15s;
+}
+.msg-fmt-btn.active {
+  background: var(--accent-l);
+  color: var(--accent-d);
+  border-color: var(--accent);
+}
+
+/* ══════════════════════════════════════
+   選修課推薦系統
+══════════════════════════════════════ */
+/* 報價單內 - 推薦選修課區塊 */
+.elec-rec-section {
+  padding: 14px 22px 16px;
+  border-top: 1px solid var(--border);
+  background: linear-gradient(135deg, #fffbeb 0%, #fefce8 100%);
+}
+.elec-rec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.elec-rec-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.elec-rec-empty {
+  font-size: 13px;
+  color: var(--text3);
+  padding: 8px 0;
+}
+.elec-chips-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.elec-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  border-radius: 99px;
+  padding: 4px 10px 4px 8px;
+  font-size: 12px;
+  color: #92400e;
+  font-weight: 600;
+  transition: all .15s;
+  cursor: pointer;
+  text-decoration: none;
+}
+.elec-chip:hover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #78350f;
+}
+.elec-chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  flex-shrink: 0;
+}
+.elec-chip-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #b45309;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 0 0 2px;
+  opacity: .5;
+  transition: opacity .15s;
+}
+.elec-chip-remove:hover { opacity: 1; }
+
+/* 選修課推薦 Modal */
+.elec-modal {
+  background: var(--bg2);
+  padding: 0;
+  border-radius: 18px;
+  width: 680px;
+  max-width: 96vw;
+  max-height: 88vh;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  animation: modalIn .22s cubic-bezier(.34,1.2,.64,1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.elec-modal-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.elec-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* 程度選擇 */
+.level-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.level-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  white-space: nowrap;
+}
+.level-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--bg3);
+  color: var(--text3);
+  font-family: var(--font-tc);
+  transition: all .15s;
+  white-space: nowrap;
+}
+.level-btn:hover { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
+.level-btn.active { background: #fef3c7; color: #92400e; border-color: #f59e0b; box-shadow: 0 0 0 2px #fde68a; }
+
+/* 分類過濾 tabs */
+.cat-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  background: var(--bg3);
+}
+.cat-tab {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text3);
+  font-family: var(--font-tc);
+  transition: all .12s;
+}
+.cat-tab:hover { background: var(--bg2); color: var(--text2); }
+.cat-tab.active { background: var(--bg2); color: var(--accent); border-color: var(--border); }
+
+/* 課程列表 */
+.elec-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  align-content: start;
+}
+@media(max-width:560px){ .elec-list{ grid-template-columns:1fr; } }
+
+.elec-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  cursor: pointer;
+  transition: border-color .15s, background .15s, opacity .15s;
+  user-select: none;
+}
+.elec-item:hover { border-color: #f59e0b; background: #fffbeb; }
+.elec-item.selected { border-color: #f59e0b; background: #fef9c3; }
+.elec-item.hidden { display: none; }
+
+.elec-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid var(--border2);
+  background: var(--bg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all .15s;
+  font-size: 11px;
+}
+.elec-item.selected .elec-check {
+  background: #f59e0b;
+  border-color: #d97706;
+  color: white;
+}
+.elec-item-body { flex: 1; min-width: 0; }
+.elec-item-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.elec-item-name a {
+  color: inherit;
+  text-decoration: none;
+}
+.elec-item-name a:hover { color: var(--accent); }
+.elec-link-icon { font-size: 10px; opacity: .4; }
+.elec-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.elec-tag {
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-weight: 600;
+}
+.elec-tag.level-tag { background: #e0f2fe; color: #0369a1; }
+.elec-tag.cat-tag { background: #f3e8ff; color: #7e22ce; }
+.elec-rec-badge {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 700;
+  border: 1px solid #fde68a;
+}
+
+/* 底部 bar */
+.elec-modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  background: var(--bg3);
+}
+.elec-selected-count {
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 700;
+}
+
+/* ══════════════════════════════════════
+   截圖分享 Modal
+══════════════════════════════════════ */
+.share-modal {
+  background: var(--bg2);
+  padding: 24px 26px;
+  border-radius: 18px;
+  width: 560px;
+  max-width: 96vw;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  animation: modalIn .22s cubic-bezier(.34,1.2,.64,1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.share-preview-wrap {
+  background: var(--bg);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+}
+#shareCanvas {
+  display: block;
+  max-width: 100%;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+.share-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ══════════════════════════════════════
    登入畫面
 ══════════════════════════════════════ */
 .login-screen{
@@ -545,31 +1199,100 @@ table.dil-table{width:100%;border-collapse:collapse;}
   <div class="qcard">
     <!-- header -->
     <div class="q-header">
+      <!-- 左上：學員姓名 -->
       <div class="q-header-left">
         <div class="ql">學員姓名</div>
         <div class="q-sname-wrap">
           <input type="text" id="qStudentName" placeholder="請輸入學員姓名" maxlength="20">
           <span>的學習方案</span>
         </div>
-
       </div>
+      <!-- 右上：報價日期 -->
       <div class="q-header-right">
         <div class="q-date-label">報價日期</div>
         <div class="q-date-val" id="qDate"></div>
+      </div>
+      <!-- 下排：測試等級 + 老師評語 -->
+      <div class="q-header-bottom">
+        <div class="q-level-wrap">
+          <span class="q-level-label">🎓 測試等級</span>
+          <select id="qTestLevel" class="q-level-select">
+            <option value="">未測驗</option>
+            <optgroup label="Kids">
+              <option>Pre-Starter</option>
+              <option>Starter</option>
+              <option>Lv 1</option>
+              <option>Lv 2</option>
+              <option>Lv 3</option>
+              <option>Lv 4</option>
+              <option>Lv 5</option>
+              <option>Lv 6</option>
+            </optgroup>
+            <optgroup label="Junior">
+              <option>Jr Starter</option>
+              <option>Jr Lv 1</option>
+              <option>Jr Lv 2</option>
+              <option>Jr Lv 3</option>
+              <option>Jr Lv 4</option>
+              <option>Jr Lv 5</option>
+              <option>Jr Lv 6</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="q-comment-wrap">
+          <div class="q-comment-label">💬 老師評語</div>
+          <textarea id="qTeacherComment" class="q-comment-input" rows="3"
+            placeholder="例：發音清楚，句型需加強；活潑外向，口說潛力佳…"
+            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        </div>
       </div>
     </div>
 
     <!-- 方案明細 -->
     <div class="q-sec">
       學習方案明細
-      <div style="display:flex;gap:6px;align-items:center">
-        <button class="q-add-btn" onclick="addQGiftCol()" title="新增一個贈送欄位">🎁 新增贈送欄</button>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <div class="q-view-toggle no-print">
+          <button class="q-view-btn active" id="viewBtnCard" onclick="switchQView('card')">🃏 名片</button>
+          <button class="q-view-btn" id="viewBtnTable" onclick="switchQView('table')">📊 表格</button>
+        </div>
+        <button class="q-add-btn" onclick="addQGiftCol()" title="新增一個贈送欄位" id="addGiftColBtn">🎁 新增贈送欄</button>
         <button class="q-add-btn" onclick="openTplPicker('KIDS')" style="background:#e0f2fe;color:#0284c7">＋ KIDS 方案</button>
         <button class="q-add-btn" onclick="openTplPicker('Junior')" style="background:#fef9c3;color:#b45309">＋ Junior 方案</button>
       </div>
     </div>
-    <!-- 動態表格，由 JS 完整渲染 -->
-    <div class="q-table-wrap" id="qPlanTableWrap"></div>
+    <!-- 名片卡 + 推薦選修課 橫向並排 -->
+    <div class="plan-row-wrap" id="planRowWrap">
+      <!-- 左：名片卡 -->
+      <div id="qPlanCardsView" class="plan-cards-view"></div>
+      <!-- 右：推薦選修課側邊面板 -->
+      <div class="elec-side-panel hidden" id="elecSidePanel">
+        <div class="elec-side-header">
+          <div class="elec-side-title">📚 推薦選修課</div>
+          <button class="q-add-btn" onclick="openElecModal()" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:11px;padding:3px 10px">＋ 選擇</button>
+        </div>
+        <div class="elec-grid-wrap" id="elecGridWrap">
+          <div class="elec-grid-empty">點「＋ 選擇」<br>開啟課程庫</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="plan-cards-actions no-print" id="qPlanCardsActions" style="display:none;padding:0 22px 10px">
+      <button class="btn btn-ghost btn-sm" onclick="openShareModal()">📸 截圖分享</button>
+    </div>
+    <!-- 動態表格（切換用），由 JS 完整渲染 -->
+    <div class="q-table-wrap" id="qPlanTableWrap" style="display:none"></div>
+
+    <!-- 推薦選修課（表格模式 fallback / 備份顯示） -->
+    <div class="elec-rec-section" id="elecRecSection" style="display:none">
+      <div class="elec-rec-header">
+        <div class="elec-rec-title">📚 推薦選修課</div>
+        <button class="q-add-btn" onclick="openElecModal()" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a">＋ 選擇課程</button>
+      </div>
+      <div id="elecChipsWrap" class="elec-chips-wrap">
+        <span class="elec-rec-empty">尚未選擇推薦課程</span>
+      </div>
+    </div>
 
     <!-- 勤學活動 -->
     <div class="q-sec" style="margin-top:4px">
@@ -596,6 +1319,12 @@ table.dil-table{width:100%;border-collapse:collapse;}
           <button class="q-add-btn" onclick="toggleMsgTpl()" id="msgTplToggle">✏️ 編輯模板</button>
           <button class="q-add-btn" onclick="generateMsg()" style="background:#dcfce7;color:#166534">📋 產生訊息</button>
         </div>
+      </div>
+
+      <!-- 訊息格式切換 -->
+      <div class="msg-format-tabs">
+        <button class="msg-fmt-btn active" id="fmtBtnSingle" onclick="switchMsgFmt('single')">📄 單方案格式</button>
+        <button class="msg-fmt-btn" id="fmtBtnCompare" onclick="switchMsgFmt('compare')">📊 多方案對比</button>
       </div>
 
       <!-- 模板編輯區（預設隱藏） -->
@@ -647,6 +1376,41 @@ table.dil-table{width:100%;border-collapse:collapse;}
       <span class="accent-chip" id="modalChip">NEW</span>
     </div>
     <div class="form-group"><label>姓名</label><input id="mName" placeholder="請輸入學員姓名"></div>
+
+    <!-- 測驗結果區塊 — 放最上方確保看得到 -->
+    <div style="background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:#0369a1;margin-bottom:10px">🎓 本次測驗結果</div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label>測試等級</label>
+        <select id="mTestLevel" style="font-weight:700">
+          <option value="">— 尚未測驗 —</option>
+          <optgroup label="Kids">
+            <option>Pre-Starter（入門前）</option>
+            <option>Starter</option>
+            <option>Lv 1</option>
+            <option>Lv 2</option>
+            <option>Lv 3</option>
+            <option>Lv 4</option>
+            <option>Lv 5</option>
+            <option>Lv 6</option>
+          </optgroup>
+          <optgroup label="Junior">
+            <option>Jr Starter</option>
+            <option>Jr Lv 1</option>
+            <option>Jr Lv 2</option>
+            <option>Jr Lv 3</option>
+            <option>Jr Lv 4</option>
+            <option>Jr Lv 5</option>
+            <option>Jr Lv 6</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>老師評語</label>
+        <textarea id="mTeacherComment" rows="2" placeholder="例：發音清楚，但句型需加強；活潑外向，口說潛力佳…"></textarea>
+      </div>
+    </div>
+
     <div class="form-group">
       <label>日期與時間</label>
       <div class="form-row">
@@ -674,6 +1438,7 @@ table.dil-table{width:100%;border-collapse:collapse;}
       </div>
     </div>
     <div class="form-group"><label>聯絡事項</label><input id="mContact" placeholder="下次聯絡提醒..."></div>
+
     <div class="form-group"><label>私房備註</label><textarea id="mNote" rows="2" placeholder="個人備忘..."></textarea></div>
     <!-- 報價單快捷按鈕 -->
     <div style="margin-bottom:14px">
@@ -719,6 +1484,51 @@ table.dil-table{width:100%;border-collapse:collapse;}
     </div>
   </div>
 
+  <!-- 選修課推薦 Modal -->
+  <div id="elecModal" class="elec-modal" onclick="event.stopPropagation()" style="display:none">
+    <div class="elec-modal-header">
+      <div class="elec-modal-title">📚 選修課推薦系統</div>
+      <div class="level-row">
+        <span class="level-label">學員程度：</span>
+        <button class="level-btn" onclick="setElecLevel('Pre-Starter')"    id="lvl-Pre-Starter">Pre-Starter</button>
+        <button class="level-btn" onclick="setElecLevel('Starter')"  id="lvl-Starter">Starter</button>
+        <button class="level-btn" onclick="setElecLevel('Lv1')"      id="lvl-Lv1">Lv 1</button>
+        <button class="level-btn" onclick="setElecLevel('Lv2')"      id="lvl-Lv2">Lv 2</button>
+        <button class="level-btn" onclick="setElecLevel('Lv3')"      id="lvl-Lv3">Lv 3</button>
+        <button class="level-btn" onclick="setElecLevel('Lv4+')"     id="lvl-Lv4+">Lv 4+</button>
+        <button class="level-btn" onclick="setElecLevel('all')"      id="lvl-all" style="color:var(--text3)">全部</button>
+      </div>
+    </div>
+    <div class="cat-tabs" id="elecCatTabs">
+      <!-- 動態產生 -->
+    </div>
+    <div class="elec-list" id="elecList">
+      <!-- 動態產生 -->
+    </div>
+    <div class="elec-modal-footer">
+      <span class="elec-selected-count" id="elecSelCount">已選 0 堂</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="clearElecSel()">清除全部</button>
+        <button class="btn btn-primary btn-sm" onclick="confirmElecSel()">✓ 確認加入方案卡</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeOverlay()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 截圖分享 Modal -->
+  <div id="shareModal" class="share-modal" onclick="event.stopPropagation()" style="display:none">
+    <div class="modal-title">📸 方案卡截圖分享</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">產生方案名片卡圖片，可直接傳給家長</div>
+    <div class="share-preview-wrap">
+      <canvas id="shareCanvas"></canvas>
+    </div>
+    <div class="share-btns">
+      <button class="btn btn-primary" onclick="downloadShareImg()">⬇ 下載圖片</button>
+      <button class="btn btn-ghost" onclick="copyShareImg()">📋 複製圖片</button>
+      <button class="btn btn-ghost" onclick="closeOverlay()">關閉</button>
+    </div>
+  </div>
+
   <!-- 刪除確認 -->
   <div id="confirmBox" class="confirm-box" onclick="event.stopPropagation()" style="display:none">
     <div class="confirm-icon">🗑️</div>
@@ -759,11 +1569,18 @@ if(sessionStorage.getItem('lily_logged_in')==='1'){
 /* ════════ CRM 資料 ════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbwaJfQsr2zKC7BW1v7-fqCFeTCAojuNQJmu1i712BcSONgrqbnzq4nQn36xDsgBo2g-JQ/exec';
 const API_KEY = 'd2e4cf110dd9399d73089d3bb3fd2072';
-let data     = JSON.parse(localStorage.getItem("lily_crm_vFinal"))        || [];
-let statuses = JSON.parse(localStorage.getItem("lily_crm_status_vFinal")) || [
+let isSyncing=false;
+
+function safeParse(key, fallback){
+  try{ const v=localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch(e){ console.warn('localStorage parse error for '+key, e); return fallback; }
+}
+
+let data     = safeParse("lily_crm_vFinal", []);
+let statuses = safeParse("lily_crm_status_vFinal", [
   {name:"已邀約",color:"#54a0ff"},{name:"未DEMO",color:"#ff9f43"},
   {name:"已DEMO",color:"#1dd1a1"},{name:"成交",color:"#a29bfe"},{name:"取消",color:"#ee5253"}
-];
+]);
 const FIXED_PLANS={輕鬆學:68400,進階學:92400,小夢想家:116400,大夢想家:140400};
 function getPlanAmount(item){
   if(!item.plan)return 0;
@@ -773,7 +1590,6 @@ function getPlanAmount(item){
 let currentEditId=null,pendingDeleteId=null,draggedId=null;
 let selectedPlanName=null,selectedPlanAmount=null,isCustomPlan=false;
 let calendarInstance=null;
-let isSyncing=false;
 
 /* ════════ 雲端同步（JSONP 方式，完全繞過 CORS）════════ */
 function setSyncStatus(msg, color){
@@ -950,8 +1766,8 @@ function renderBoard(){
       const d=new Date(item.time),enDate=d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'}),tp=item.time.split('T')[1]||'';
       const card=document.createElement('div');card.className='card';card.draggable=true;card.style.borderLeftColor=s.color;
       const pl=item.plan?(item.customAmount?`✏️ ${item.plan}`:`💎 ${item.plan}`):'';
-      card.innerHTML=`<div class="card-name">${esc(item.name)}</div><span class="card-time">${enDate} · ${tp}</span>${pl?`<span class="card-plan">${esc(pl)}</span>`:''}`;
-      card.onclick=()=>openModal(item.id);
+      const lvBadge=item.testLevel?`<span style="display:inline-block;background:#e0f2fe;color:#0369a1;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-top:3px">${esc(item.testLevel)}</span>`:'';
+      card.innerHTML=`<div class="card-name">${esc(item.name)}</div><span class="card-time">${enDate} · ${tp}</span>${pl?`<span class="card-plan">${esc(pl)}</span>`:''}${lvBadge}`;      card.onclick=()=>openModal(item.id);
       card.oncontextmenu=e=>showCtxMenu(e,item.id);
       card.ondragstart=()=>{draggedId=item.id;};
       area.appendChild(card);
@@ -1019,7 +1835,7 @@ document.addEventListener('click',closeCtx);
 
 /* ════════ Overlay ════════ */
 function openOverlay(which){
-  ['modal','statusModal','confirmBox','tplModal','savedQuotesModal'].forEach(id=>document.getElementById(id).style.display=(id===which)?'block':'none');
+  ['modal','statusModal','confirmBox','tplModal','savedQuotesModal','shareModal','elecModal'].forEach(id=>document.getElementById(id).style.display=(id===which)?'block':'none');
   document.getElementById('overlay').classList.add('show');
 }
 function closeOverlay(){document.getElementById('overlay').classList.remove('show');pendingDeleteId=null;}
@@ -1049,6 +1865,8 @@ function openModal(id=null,defaultDate=null){
   document.getElementById('mStatus').value=item?item.status:statuses[0].name;
   document.getElementById('mContact').value=item?(item.contact||''):'';
   document.getElementById('mNote').value=item?(item.note||''):'';
+  document.getElementById('mTestLevel').value=item?(item.testLevel||''):'';
+  document.getElementById('mTeacherComment').value=item?(item.teacherComment||''):'';
   if(item){const[d,t]=item.time.split('T');document.getElementById('mDate').value=d;document.getElementById('mHour').value=t?t.split(':')[0]:'09';document.getElementById('mMin').value=t?t.split(':')[1]:'00';}
   else{document.getElementById('mDate').value=defaultDate||new Date().toISOString().split('T')[0];document.getElementById('mHour').value='09';document.getElementById('mMin').value='00';}
   clearPlanSel();onStatusChange();
@@ -1062,12 +1880,14 @@ function openModal(id=null,defaultDate=null){
 /* ─── 從 Modal 開啟報價單 ─── */
 function openQuoteFromModal(){
   const name=document.getElementById('mName').value.trim();
+  const testLevel=document.getElementById('mTestLevel').value;
+  const teacherComment=document.getElementById('mTeacherComment').value;
   closeOverlay();
-  // 切換到報價頁
   const tabEl=document.querySelector('.tab-item:nth-child(4)');
   switchPage('quote-page',tabEl);
-  // 填入姓名
   if(name) document.getElementById('qStudentName').value=name;
+  if(testLevel) document.getElementById('qTestLevel').value=testLevel;
+  if(teacherComment) document.getElementById('qTeacherComment').value=teacherComment;
 }
 
 function saveData(){
@@ -1078,7 +1898,13 @@ function saveData(){
     if(isCustomPlan){planName=document.getElementById('customPlanName').value.trim()||'自訂課程';const amt=parseInt(document.getElementById('customPlanAmount').value)||0;if(amt<=0){alert('請輸入有效金額');return;}customAmount=amt;}
     else{if(!selectedPlanName){alert('請選擇課程方案');return;}planName=selectedPlanName;}
   }
-  const item={id:currentEditId||Date.now(),name,status,plan:planName,customAmount,time:`${document.getElementById('mDate').value}T${document.getElementById('mHour').value}:${document.getElementById('mMin').value}`,contact:document.getElementById('mContact').value,note:document.getElementById('mNote').value};
+  const item={id:currentEditId||Date.now(),name,status,plan:planName,customAmount,
+    time:`${document.getElementById('mDate').value}T${document.getElementById('mHour').value}:${document.getElementById('mMin').value}`,
+    contact:document.getElementById('mContact').value,
+    note:document.getElementById('mNote').value,
+    testLevel:document.getElementById('mTestLevel').value,
+    teacherComment:document.getElementById('mTeacherComment').value
+  };
   if(currentEditId)data[data.findIndex(x=>x.id==currentEditId)]=item;else data.push(item);
   persist();closeOverlay();refreshCal();renderBoard();renderList();updateSalesUI();
 }
@@ -1128,9 +1954,526 @@ const Q_TEMPLATES = {
 };
 
 /* ════════════════════════════════════════
-   報價單邏輯（動態贈送欄）
-   qGiftCols / qPlans / qDils 在底部初始化
+   方案卡視圖切換
 ════════════════════════════════════════ */
+let qCurrentView = 'card'; // 'card' | 'table'
+let qMsgFmt = 'single';   // 'single' | 'compare'
+
+function switchQView(v){
+  qCurrentView = v;
+  document.getElementById('viewBtnCard').classList.toggle('active', v==='card');
+  document.getElementById('viewBtnTable').classList.toggle('active', v==='table');
+  document.getElementById('addGiftColBtn').style.display = v==='table' ? '' : 'none';
+  document.getElementById('planRowWrap').style.display = v==='card' ? '' : 'none';
+  document.getElementById('qPlanCardsActions').style.display = (v==='card' && qPlans.length>0) ? '' : 'none';
+  document.getElementById('qPlanTableWrap').style.display = v==='table' ? '' : 'none';
+  if(v==='card'){ renderQPlanCards(); renderElecGrid(); }
+  else { renderQPlan(); renderElecGrid(); }
+}
+
+function switchMsgFmt(fmt){
+  qMsgFmt = fmt;
+  document.getElementById('fmtBtnSingle').classList.toggle('active', fmt==='single');
+  document.getElementById('fmtBtnCompare').classList.toggle('active', fmt==='compare');
+  // 隱藏模板編輯器（格式切換後重置）
+  document.getElementById('msgOutput').style.display='none';
+  const ed=document.getElementById('msgTplEditor');
+  ed.style.display='none';
+  document.getElementById('msgTplToggle').textContent='✏️ 編輯模板';
+}
+
+/* ────────────────────────────────────────
+   名片卡渲染
+──────────────────────────────────────── */
+const CARD_TOP_COLORS = ['','gold','purple','green','','gold','purple','green'];
+
+function renderQPlanCards(){
+  const wrap = document.getElementById('qPlanCardsView');
+  const actionsBar = document.getElementById('qPlanCardsActions');
+  const sidePanel = document.getElementById('elecSidePanel');
+  if(qPlans.length === 0){
+    wrap.innerHTML = `<div style="padding:30px;color:var(--text3);font-size:14px;text-align:center;width:100%">
+      點擊上方「＋ KIDS 方案」或「＋ Junior 方案」新增方案 🎯
+    </div>`;
+    actionsBar.style.display='none';
+    if(sidePanel) sidePanel.classList.add('hidden');
+    return;
+  }
+  actionsBar.style.display='';
+  if(sidePanel) sidePanel.classList.remove('hidden');
+  const gc = qGiftCols;
+
+  wrap.innerHTML = qPlans.map((p,i)=>{
+    const colorClass = CARD_TOP_COLORS[i % CARD_TOP_COLORS.length];
+    const giftTotal = (p.gifts||[]).reduce((a,b)=>a+b,0);
+    const grandTotal = (p.total||0) + giftTotal;
+
+    // 課堂明細列
+    let rows = `
+      <div class="pnc-row prog">
+        <span class="pnc-row-label">進度班</span>
+        <span class="pnc-row-val">${p.prog||0} 堂</span>
+      </div>
+      <div class="pnc-row elec">
+        <span class="pnc-row-label">選修課</span>
+        <span class="pnc-row-val">${p.elec||0} 堂</span>
+      </div>`;
+    if(p.magic>0) rows += `
+      <div class="pnc-row magic">
+        <span class="pnc-row-label">魔法屋</span>
+        <span class="pnc-row-val">${p.magic} 堂</span>
+      </div>`;
+    gc.forEach((g,gi)=>{
+      const v=(p.gifts||[])[gi]||0;
+      if(v>0) rows += `
+        <div class="pnc-row gift-row">
+          <span class="pnc-row-label">🎁 ${esc(g.label)}</span>
+          <span class="pnc-row-val">+${v} 堂</span>
+        </div>`;
+    });
+    rows += `
+      <div class="pnc-row total-row">
+        <span class="pnc-row-label">合計</span>
+        <span class="pnc-row-val">${grandTotal} 堂</span>
+      </div>`;
+
+    return `<div class="plan-namecard" id="pnc-${i}">
+      <div class="pnc-top ${colorClass}"></div>
+      <button class="pnc-del no-print" onclick="delQPlan(${i})" title="刪除">✕</button>
+      <div class="pnc-body">
+        <div class="pnc-name" contenteditable="true" oninput="qPlans[${i}].name=this.textContent">${esc(p.name)}</div>
+        <div class="pnc-months">${p.months||24} 個月合約</div>
+        <div class="pnc-rows">${rows}</div>
+        <hr class="pnc-divider">
+        <div class="pnc-price-block">
+          <div class="pnc-monthly-label">月付（八折後）</div>
+          <div class="pnc-monthly">NT$<span id="pnc-monthly-${i}" contenteditable="true" oninput="qPlans[${i}].monthly=parseInt(this.textContent.replace(/,/g,''))||0">${(p.monthly||0).toLocaleString()}</span></div>
+          <div class="pnc-monthly-sub">共 ${p.months||24} 期零利率</div>
+          <div class="pnc-total">總價 NT$<span id="pnc-price-${i}" contenteditable="true" oninput="qPlans[${i}].price=parseInt(this.textContent.replace(/,/g,''))||0">${(p.price||0).toLocaleString()}</span></div>
+          ${(p.bonusOnePay||0)>0?`<div class="pnc-bonus">一次付清加贈 ${p.bonusOnePay} 堂選修課 🎁</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // 同步側邊選修課面板
+  renderElecGrid();
+}
+
+/* ────────────────────────────────────────
+   截圖分享
+──────────────────────────────────────── */
+async function openShareModal(){
+  if(qPlans.length===0){ alert('請先新增方案'); return; }
+  openOverlay('shareModal');
+  // 先清空 canvas
+  const canvas = document.getElementById('shareCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 100; canvas.height = 40;
+  ctx.fillStyle='#f5f7fa'; ctx.fillRect(0,0,100,40);
+  ctx.fillStyle='#94a3b8'; ctx.font='12px sans-serif'; ctx.fillText('產生中…',10,25);
+
+  await new Promise(r=>setTimeout(r,100));
+  await buildShareCanvas();
+}
+
+async function buildShareCanvas(){
+  const canvas = document.getElementById('shareCanvas');
+  const ctx = canvas.getContext('2d');
+  const studentName = document.getElementById('qStudentName').value.trim() || '學員';
+  const testLevel   = document.getElementById('qTestLevel').value;
+  const teacherComment = document.getElementById('qTeacherComment').value.trim();
+  const plans = qPlans;
+  const gc    = qGiftCols;
+  const selectedElec = ELEC_COURSES.filter(c => elecSelected.has(c.id));
+  const hasElec = selectedElec.length > 0;
+
+  /* ── helper：逐字元換行 ── */
+  function wrap(text, maxW){
+    const lines = []; let line = '';
+    for(const ch of text){
+      const test = line + ch;
+      if(ctx.measureText(test).width > maxW && line){ lines.push(line); line = ch; }
+      else line = test;
+    }
+    if(line) lines.push(line);
+    return lines;
+  }
+
+  /* ── 等級配色 ── */
+  const LV_COLOR = {
+    'Pre-Starter':['#fef3c7','#92400e','#f59e0b'],
+    'Starter':    ['#fef3c7','#92400e','#f59e0b'],
+    'Lv 1':['#dcfce7','#14532d','#16a34a'],
+    'Lv 2':['#dcfce7','#14532d','#16a34a'],
+    'Lv 3':['#dbeafe','#1e3a8a','#2563eb'],
+    'Lv 4':['#dbeafe','#1e3a8a','#2563eb'],
+    'Lv 5':['#ede9fe','#3b0764','#7c3aed'],
+    'Lv 6':['#ede9fe','#3b0764','#7c3aed'],
+    'Jr Starter':['#fce7f3','#831843','#db2777'],
+    'Jr Lv 1':['#fce7f3','#831843','#db2777'],
+    'Jr Lv 2':['#fce7f3','#831843','#db2777'],
+    'Jr Lv 3':['#fdf4ff','#701a75','#a21caf'],
+    'Jr Lv 4':['#fdf4ff','#701a75','#a21caf'],
+    'Jr Lv 5':['#fdf4ff','#701a75','#a21caf'],
+    'Jr Lv 6':['#fdf4ff','#701a75','#a21caf'],
+  };
+  const lvC = testLevel ? (LV_COLOR[testLevel]||['#e0f2fe','#0369a1','#0ea5e9']) : null;
+
+  /* ── 尺寸常數 ── */
+  const CARD_W = 250, GAP = 18, PAD = 30;
+  const ELEC_W = hasElec ? 230 : 0;
+  const ELEC_GAP = hasElec ? GAP : 0;
+  const COLS = Math.min(plans.length, 3);
+  const ROWS = Math.ceil(plans.length / COLS);
+
+  /* ── 卡片高度精算 ── */
+  function cardH(p){
+    let rows = 2; // 進度 + 選修
+    if(p.magic > 0) rows++;
+    (p.gifts||[]).forEach(v => { if(v>0) rows++; });
+    rows++; // 合計
+    // 明細區 + 分隔 + 月付標籤+金額+期數 + 總價 + 加贈
+    const bonusH = (p.bonusOnePay||0)>0 ? 20 : 0;
+    return 60 + rows*26 + 16 + 16+26+20+20 + bonusH + 18;
+  }
+  const rowH = Array.from({length:ROWS},(_,r)=>{
+    let mx=0;
+    for(let c=0;c<COLS;c++){ const p=plans[r*COLS+c]; if(p) mx=Math.max(mx,cardH(p)); }
+    return mx+10;
+  });
+  const totalCardH = rowH.reduce((a,b)=>a+b,0)+(ROWS-1)*GAP;
+
+  /* ── 選修課面板高度精算 ── */
+  let elecH = 0;
+  if(hasElec){
+    ctx.font='9px "Noto Sans TC",sans-serif';
+    elecH = 50;
+    selectedElec.forEach((c,i)=>{
+      elecH += 18;
+      if(c.desc) elecH += wrap(c.desc, ELEC_W-32).length * 14 + 2;
+      elecH += 6;
+      if(i < selectedElec.length-1) elecH += 8;
+    });
+    elecH += 12;
+  }
+
+  /* ── 評語換行 ── */
+  const PLAN_AREA_W = COLS*CARD_W+(COLS-1)*GAP;
+  const W = PAD*2 + PLAN_AREA_W + ELEC_GAP + ELEC_W;
+  let commentLines = [];
+  if(teacherComment){
+    ctx.font='11px "Noto Sans TC",sans-serif';
+    commentLines = wrap(teacherComment, W - PAD*2 - 36);
+  }
+  const TOP_OFFSET = (lvC ? 22 : 0) + 58
+                   + (commentLines.length ? 14 + commentLines.length*16 : 0);
+  const contentH = Math.max(totalCardH, elecH);
+  const H = PAD + TOP_OFFSET + contentH + PAD + 20;
+
+  /* ── 初始化 canvas ── */
+  canvas.width = W*2; canvas.height = H*2;
+  ctx.scale(2,2);
+
+  /* 背景 */
+  const bg = ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#f0f9ff'); bg.addColorStop(1,'#f1f5f9');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  /* ── 等級 badge（右上角精緻版）── */
+  if(lvC){
+    const [bgC, textC, borderC] = lvC;
+    // 小標
+    ctx.font='bold 9px "Noto Sans TC",sans-serif';
+    const tagTxt='測試等級';
+    const tagW=ctx.measureText(tagTxt).width+12, tagH=14;
+    const tagX=W-PAD-tagW-2, tagY=PAD+4;
+    roundRect(ctx,tagX,tagY,tagW,tagH,7);
+    ctx.fillStyle=bgC; ctx.fill();
+    ctx.strokeStyle=borderC; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle=textC; ctx.fillText(tagTxt,tagX+6,tagY+10);
+
+    // 大膠囊
+    ctx.font='bold 18px "DM Sans",sans-serif';
+    const lvTxt=testLevel;
+    const lvW=ctx.measureText(lvTxt).width+32, lvH=34;
+    const lvX=W-PAD-lvW, lvY=tagY+tagH+4;
+    roundRect(ctx,lvX,lvY,lvW,lvH,17);
+    ctx.fillStyle=bgC; ctx.fill();
+    ctx.strokeStyle=borderC; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle=textC;
+    ctx.fillText(lvTxt, lvX+16, lvY+24);
+  }
+
+  /* ── 標題 ── */
+  ctx.fillStyle='#0f172a'; ctx.font='bold 20px "Noto Sans TC",sans-serif';
+  ctx.fillText(`${studentName} 的學習方案`, PAD, PAD+(lvC?18:0)+22);
+  ctx.fillStyle='#94a3b8'; ctx.font='11px "DM Sans",sans-serif';
+  ctx.fillText(new Date().toLocaleDateString('zh-TW'), PAD, PAD+(lvC?18:0)+38);
+
+  /* ── 評語區塊 ── */
+  if(commentLines.length){
+    const cmtY = PAD+(lvC?18:0)+50;
+    const cmtH = commentLines.length*16+12;
+    roundRect(ctx, PAD, cmtY, W-PAD*2, cmtH, 8);
+    ctx.fillStyle='rgba(248,250,252,0.9)'; ctx.fill();
+    ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=0.8; ctx.stroke();
+    ctx.fillStyle='#64748b'; ctx.font='11px "Noto Sans TC",sans-serif';
+    ctx.fillText('💬', PAD+10, cmtY+14+2);
+    commentLines.forEach((l,li)=>{
+      ctx.fillText(l, PAD+30, cmtY+14+li*16);
+    });
+  }
+
+  /* ── 方案卡 ── */
+  const CARD_TOP_COLORS=[
+    ['#0ea5e9','#38bdf8'],['#d97706','#f59e0b'],
+    ['#7c3aed','#a855f7'],['#059669','#34d399'],
+  ];
+  let rowBase = PAD+TOP_OFFSET;
+
+  plans.forEach((p,i)=>{
+    const col=i%COLS, row=Math.floor(i/COLS);
+    const x=PAD+col*(CARD_W+GAP);
+    const y=rowBase+rowH.slice(0,row).reduce((a,b)=>a+b+GAP,0);
+    const CH=rowH[row]-10;
+
+    /* 卡片陰影感（淡色偏移） */
+    roundRect(ctx,x+2,y+3,CARD_W,CH,16);
+    ctx.fillStyle='rgba(15,23,42,.06)'; ctx.fill();
+
+    /* 卡片本體 */
+    roundRect(ctx,x,y,CARD_W,CH,16);
+    ctx.fillStyle='#ffffff'; ctx.fill();
+    ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1; ctx.stroke();
+
+    /* 頂部色帶 */
+    const [c1,c2]=CARD_TOP_COLORS[i%CARD_TOP_COLORS.length];
+    const topG=ctx.createLinearGradient(x,y,x+CARD_W,y);
+    topG.addColorStop(0,c1); topG.addColorStop(1,c2);
+    roundRectTop(ctx,x,y,CARD_W,7,16);
+    ctx.fillStyle=topG; ctx.fill();
+
+    /* 方案名稱 */
+    ctx.fillStyle='#0f172a'; ctx.font='bold 17px "Noto Sans TC",sans-serif';
+    ctx.fillText(p.name||'方案', x+16, y+30);
+    ctx.fillStyle='#94a3b8'; ctx.font='10px "DM Sans",sans-serif';
+    ctx.fillText(`${p.months||24} 個月合約`, x+16, y+46);
+
+    /* 明細列 */
+    let ry=y+60;
+    const drawRow=(label,val,rowBg,valCol='#0f172a')=>{
+      roundRect(ctx,x+10,ry,CARD_W-20,22,6);
+      ctx.fillStyle=rowBg; ctx.fill();
+      ctx.fillStyle='#64748b'; ctx.font='10px "Noto Sans TC",sans-serif';
+      ctx.fillText(label, x+18, ry+15);
+      ctx.fillStyle=valCol; ctx.font='bold 12px "DM Sans",sans-serif';
+      const vw=ctx.measureText(val).width;
+      ctx.fillText(val, x+CARD_W-18-vw, ry+15);
+      ry+=26;
+    };
+    drawRow('進度班',`${p.prog||0} 堂`,'#eff6ff');
+    drawRow('選修課',`${p.elec||0} 堂`,'#fffbeb','#b45309');
+    if(p.magic>0) drawRow('魔法屋',`${p.magic} 堂`,'#f0fdf4','#065f46');
+    gc.forEach((g,gi)=>{
+      const v=(p.gifts||[])[gi]||0;
+      if(v>0) drawRow(`+${g.label}`,`${v} 堂`,'#fff1f2','#e11d48');
+    });
+    drawRow('合計',`${(p.total||0)+(p.gifts||[]).reduce((a,b)=>a+b,0)} 堂`,'#f8fafc');
+
+    /* ── 價格區（仿報價頁排版）── */
+    ry+=5;
+    ctx.strokeStyle='#f1f5f9'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x+14,ry); ctx.lineTo(x+CARD_W-14,ry); ctx.stroke();
+    ry+=16;
+
+    /* 月付標籤（置中） */
+    ctx.fillStyle='#94a3b8'; ctx.font='9px "Noto Sans TC",sans-serif';
+    const lblW = ctx.measureText('月付（八折後）').width;
+    ctx.fillText('月付（八折後）', x+(CARD_W-lblW)/2, ry);
+    ry+=16;
+
+    /* 月付金額（置中，橘色大字）*/
+    const ps=`NT$${(p.monthly||0).toLocaleString()}`;
+    let psF=22; ctx.font=`bold ${psF}px "DM Sans",sans-serif`;
+    while(ctx.measureText(ps).width > CARD_W-28 && psF>12){ psF--; ctx.font=`bold ${psF}px "DM Sans",sans-serif`; }
+    const psW2=ctx.measureText(ps).width;
+    ctx.fillStyle='#ea580c';
+    ctx.fillText(ps, x+(CARD_W-psW2)/2, ry+psF-2);
+    ry += psF+4;
+
+    /* 共N期零利率（置中，小灰字）*/
+    ctx.fillStyle='#94a3b8'; ctx.font='9px "DM Sans",sans-serif';
+    const periodTxt=`共 ${p.months||24} 期零利率`;
+    const ptW=ctx.measureText(periodTxt).width;
+    ctx.fillText(periodTxt, x+(CARD_W-ptW)/2, ry+9);
+    ry+=20;
+
+    /* 總價（左對齊，深紅）*/
+    ctx.fillStyle='#9f1239'; ctx.font='bold 11px "DM Sans",sans-serif';
+    ctx.fillText(`總價 NT$${(p.price||0).toLocaleString()}`, x+16, ry+11);
+    ry+=18;
+
+    /* 一次付清加贈 */
+    if((p.bonusOnePay||0)>0){
+      ctx.fillStyle='#9f1239'; ctx.font='10px "Noto Sans TC",sans-serif';
+      ctx.fillText(`一次付清加贈 +${p.bonusOnePay} 堂選修課 🎁`, x+16, ry+10);
+    }
+  });
+
+  /* ── 選修課側欄 ── */
+  if(hasElec){
+    const ex=PAD+PLAN_AREA_W+ELEC_GAP;
+    const ey=PAD+TOP_OFFSET;
+    const EH=contentH;
+
+    /* 陰影感 */
+    roundRect(ctx,ex+2,ey+3,ELEC_W,EH,16);
+    ctx.fillStyle='rgba(234,179,8,.12)'; ctx.fill();
+
+    /* 面板 */
+    roundRect(ctx,ex,ey,ELEC_W,EH,16);
+    const elecBg=ctx.createLinearGradient(ex,ey,ex,ey+EH);
+    elecBg.addColorStop(0,'#fffbeb'); elecBg.addColorStop(1,'#fef9c3');
+    ctx.fillStyle=elecBg; ctx.fill();
+    ctx.strokeStyle='#fde68a'; ctx.lineWidth=1.5; ctx.stroke();
+
+    /* 標題 */
+    ctx.fillStyle='#92400e'; ctx.font='bold 13px "Noto Sans TC",sans-serif';
+    ctx.fillText('📚 推薦選修課', ex+14, ey+26);
+    ctx.strokeStyle='#fde68a'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(ex+12,ey+34); ctx.lineTo(ex+ELEC_W-12,ey+34); ctx.stroke();
+
+    const maxNW=ELEC_W-36, maxDW=ELEC_W-32;
+    let cy=ey+46;
+
+    selectedElec.forEach((c,i)=>{
+      /* 圓點 */
+      ctx.fillStyle='#f59e0b';
+      ctx.beginPath(); ctx.arc(ex+18,cy+8,5,0,Math.PI*2); ctx.fill();
+
+      /* 課名 */
+      ctx.fillStyle='#78350f'; ctx.font='bold 12px "Noto Sans TC",sans-serif';
+      let name=c.name;
+      while(ctx.measureText(name).width>maxNW && name.length>2) name=name.slice(0,-1);
+      if(name!==c.name) name+='…';
+      ctx.fillText(name, ex+30, cy+12);
+      cy+=18;
+
+      /* 描述換行 */
+      if(c.desc){
+        ctx.fillStyle='#a16207'; ctx.font='9px "Noto Sans TC",sans-serif';
+        wrap(c.desc, maxDW).forEach(dl=>{
+          ctx.fillText(dl, ex+30, cy+9);
+          cy+=14;
+        });
+        cy+=2;
+      }
+
+      cy+=6;
+      if(i<selectedElec.length-1){
+        ctx.strokeStyle='#fde68a'; ctx.lineWidth=0.6;
+        ctx.beginPath(); ctx.moveTo(ex+14,cy); ctx.lineTo(ex+ELEC_W-14,cy); ctx.stroke();
+        cy+=8;
+      }
+    });
+  }
+
+  /* ── 浮水印 ── */
+  ctx.fillStyle='#cbd5e1'; ctx.font='bold 9px "DM Sans",sans-serif';
+  ctx.fillText('Lily · ETalking Kids 課程顧問', PAD, H-10);
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+function roundRectTop(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h);
+  ctx.lineTo(x,y+h);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+function downloadShareImg(){
+  const canvas=document.getElementById('shareCanvas');
+  const a=document.createElement('a');
+  a.download=`方案卡_${document.getElementById('qStudentName').value||'學員'}_${new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')}.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+}
+
+async function copyShareImg(){
+  const canvas=document.getElementById('shareCanvas');
+  canvas.toBlob(async blob=>{
+    try{
+      await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+      alert('✅ 已複製圖片！可直接貼到 LINE 或 FB');
+    }catch(e){
+      alert('此瀏覽器不支援複製圖片，請改用「下載圖片」');
+    }
+  },'image/png');
+}
+
+/* ────────────────────────────────────────
+   訊息產生器 - 多方案對比格式
+──────────────────────────────────────── */
+const COMPARE_TPL = `{姓名}媽媽您好 😊
+感謝今天撥冗來了解 ETalking Kids！
+以下是我們討論的方案對比，給您參考：
+
+━━━━━━━━━━━━━━━━━━━━━━━
+{對比表}
+━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ 優惠截止：{截止日}
+
+{贈送項目}
+
+━━ 報名流程 ━━
+① 確認方案與付款方式
+② 填寫學員基本資料
+③ 課程顧問產出合約，線上簽署
+④ 刷卡完成，排定首課時間
+
+以上如有任何問題，歡迎隨時聯繫！`;
+
+function buildCompareTable(plans){
+  if(plans.length===0) return '';
+  const maxNameLen = Math.max(...plans.map(p=>(p.name||'').length), 4);
+  const pad = (s,n)=>String(s).padEnd(n,'　');
+  const lpad = (s,n)=>String(s).padStart(n,' ');
+
+  let lines = [];
+  // Header
+  let header = '　　　　';
+  plans.forEach(p=>{ header += `  ${pad(p.name||'方案',6)}`; });
+  lines.push(header);
+  lines.push('');
+
+  const addRow = (label, vals)=>{
+    let row = `${pad(label,4)}`;
+    vals.forEach(v=>{ row += `  ${lpad(String(v),6)}`; });
+    lines.push(row);
+  };
+
+  addRow('合約期',      plans.map(p=>`${p.months||24}個月`));
+  addRow('總堂數',      plans.map(p=>`${(p.total||0)+(p.gifts||[]).reduce((a,b)=>a+b,0)}堂`));
+  addRow('月付款',      plans.map(p=>`$${(p.monthly||0).toLocaleString()}`));
+  addRow('總價',        plans.map(p=>`$${(p.price||0).toLocaleString()}`));
+  if(plans.some(p=>(p.bonusOnePay||0)>0))
+    addRow('一付加贈',  plans.map(p=>`+${p.bonusOnePay||0}堂`));
+
+  return lines.join('\n');
+}
 
 /* ── 贈送欄顏色設定 ── */
 const GIFT_THEMES = {
@@ -1172,9 +2515,9 @@ function openTplPicker(group){
   blank.innerHTML = `<div class="tpl-name">✏️ 空白方案</div><div style="font-size:12px;margin-top:4px">自行填入所有數字</div>`;
   blank.onclick = ()=>{
     qPlans.push({name:'新方案',months:24,total:0,prog:0,elec:0,magic:0,gifts:qGiftCols.map(()=>0),monthly:0,price:0,perClass:0,bonusOnePay:0,bonusMagic:0});
-    closeOverlay(); renderQPlan();
-    const rows=document.getElementById('qPlanBody').querySelectorAll('tr');
-    if(rows.length) rows[rows.length-1].querySelector('input').focus();
+    closeOverlay();
+    if(qCurrentView==='card') renderQPlanCards();
+    else { renderQPlan(); const rows=document.getElementById('qPlanBody').querySelectorAll('tr'); if(rows.length) rows[rows.length-1].querySelector('input').focus(); }
   };
   grid.appendChild(blank);
   openOverlay('tplModal');
@@ -1202,7 +2545,8 @@ function applyTemplate(group, ti){
     monthly:t.monthly, price:t.price,
     perClass:t.perClass, bonusOnePay:t.bonusOnePay, bonusMagic:t.bonusMagic
   });
-  renderQPlan();
+  if(qCurrentView==='card') renderQPlanCards();
+  else renderQPlan();
 }
 
 /* ── 渲染整個方案表格（含動態欄 + 金額欄） ── */
@@ -1294,24 +2638,27 @@ function recalcRow(i){
 
 function addQPlan(){
   qPlans.push({name:'新方案',months:24,total:0,prog:0,elec:0,magic:0,gifts:qGiftCols.map(()=>0)});
-  renderQPlan();
-  const rows=document.getElementById('qPlanBody').querySelectorAll('tr');
-  rows[rows.length-1].querySelector('input').focus();
+  if(qCurrentView==='card') renderQPlanCards();
+  else { renderQPlan(); const rows=document.getElementById('qPlanBody').querySelectorAll('tr'); rows[rows.length-1].querySelector('input').focus(); }
 }
 function delQPlan(i){
   if(qPlans.length<=1&&!confirm('確定刪除最後一個方案？'))return;
-  qPlans.splice(i,1);renderQPlan();
+  qPlans.splice(i,1);
+  if(qCurrentView==='card') renderQPlanCards();
+  else renderQPlan();
 }
 function addQGiftCol(){
   qGiftCols.push({label:'新贈送欄',color:'gift'});
   qPlans.forEach(p=>{ (p.gifts=p.gifts||[]).push(0); });
-  renderQPlan();
+  if(qCurrentView==='card') renderQPlanCards();
+  else renderQPlan();
 }
 function delQGiftCol(gi){
   if(!confirm(`確定刪除「${qGiftCols[gi].label}」這個贈送欄？`))return;
   qGiftCols.splice(gi,1);
   qPlans.forEach(p=>{ if(p.gifts) p.gifts.splice(gi,1); });
-  renderQPlan();
+  if(qCurrentView==='card') renderQPlanCards();
+  else renderQPlan();
 }
 
 /* ── 勤學活動（贈送欄也跟著動態） ── */
@@ -1357,14 +2704,13 @@ function applyDilTemplate(group){
   qDils = defs.map(d=>({...d, bonuses:[...d.bonuses]}));
   // 同步贈送欄
   if(group === 'KIDS' && qGiftCols.length < 2){
-    // KIDS 需要選修課 + 魔法屋兩個贈送欄
     qGiftCols = [{label:'加贈選修課',color:'elec'},{label:'加贈魔法屋',color:'magic'}];
     qPlans.forEach(p=>{ while((p.gifts||[]).length < 2)(p.gifts=p.gifts||[]).push(0); });
-    renderQPlan();
+    if(qCurrentView==='card') renderQPlanCards(); else renderQPlan();
   } else if(group === 'Junior'){
     qGiftCols = [{label:'加贈選修課',color:'elec'}];
     qPlans.forEach(p=>{ p.gifts = [(p.gifts||[])[0]||0]; });
-    renderQPlan();
+    if(qCurrentView==='card') renderQPlanCards(); else renderQPlan();
   }
   renderQDil();
 }
@@ -1425,41 +2771,46 @@ function toggleMsgTpl(){
 function generateMsg(){
   initMsgTemplate();
   const name = document.getElementById('qStudentName').value.trim() || '___';
-  const tpl = document.getElementById('msgTemplate').value;
   const giftsText = document.getElementById('msgGifts').value.trim();
   const deadlineRaw = document.getElementById('msgDeadline').value;
   const deadline = deadlineRaw ? deadlineRaw.replace(/-/g,'/') : '____/____/____';
 
-  if(qPlans.length === 0){
-    alert('請先新增至少一個方案');
-    return;
-  }
+  if(qPlans.length === 0){ alert('請先新增至少一個方案'); return; }
 
-  // 贈送項目格式化
   const giftLines = giftsText
     ? giftsText.split('\n').filter(l=>l.trim()).map(l=>'• '+l.trim()).join('\n')
-    : '• （請編輯模板填入贈送項目）';
+    : '• （請在「編輯模板」填入贈送項目）';
 
-  // 每個方案各產生一段
-  const msgs = qPlans.map(p=>{
-    let msg = tpl;
+  let fullMsg = '';
+
+  if(qMsgFmt === 'compare'){
+    // 多方案對比格式
+    let msg = COMPARE_TPL;
     msg = msg.replace(/\{姓名\}/g, name);
-    msg = msg.replace(/\{方案\}/g, p.name || '___');
-    msg = msg.replace(/\{月數\}/g, String(p.months || 24));
-    msg = msg.replace(/\{月付\}/g, (p.monthly||0).toLocaleString());
-    msg = msg.replace(/\{總價\}/g, (p.price||0).toLocaleString());
-    msg = msg.replace(/\{一付加贈\}/g, String(p.bonusOnePay || 0));
-    msg = msg.replace(/\{贈送項目\}/g, giftLines);
     msg = msg.replace(/\{截止日\}/g, deadline);
-    return msg;
-  });
-
-  const fullMsg = msgs.join('\n\n─────────────────\n\n');
+    msg = msg.replace(/\{贈送項目\}/g, giftsText ? `━━ 本次優惠加贈 ━━\n${giftLines}` : '');
+    msg = msg.replace(/\{對比表\}/g, buildCompareTable(qPlans));
+    fullMsg = msg;
+  } else {
+    // 原本的單方案逐一格式
+    const tpl = document.getElementById('msgTemplate').value;
+    const msgs = qPlans.map(p=>{
+      let msg = tpl;
+      msg = msg.replace(/\{姓名\}/g, name);
+      msg = msg.replace(/\{方案\}/g, p.name || '___');
+      msg = msg.replace(/\{月數\}/g, String(p.months || 24));
+      msg = msg.replace(/\{月付\}/g, (p.monthly||0).toLocaleString());
+      msg = msg.replace(/\{總價\}/g, (p.price||0).toLocaleString());
+      msg = msg.replace(/\{一付加贈\}/g, String(p.bonusOnePay || 0));
+      msg = msg.replace(/\{贈送項目\}/g, giftLines);
+      msg = msg.replace(/\{截止日\}/g, deadline);
+      return msg;
+    });
+    fullMsg = msgs.join('\n\n─────────────────\n\n');
+  }
 
   document.getElementById('msgPreview').textContent = fullMsg;
   document.getElementById('msgOutput').style.display = 'block';
-
-  // 滾動到預覽區
   document.getElementById('msgOutput').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
@@ -1501,6 +2852,8 @@ async function saveQuote(){
   const planNames = qPlans.map(p=>p.name).join('、');
   const snapshot = {
     studentName: name,
+    testLevel: document.getElementById('qTestLevel').value,
+    teacherComment: document.getElementById('qTeacherComment').value,
     giftCols: JSON.parse(JSON.stringify(qGiftCols)),
     plans: JSON.parse(JSON.stringify(qPlans)),
     dils: JSON.parse(JSON.stringify(qDils)),
@@ -1568,6 +2921,8 @@ function loadQuote(i){
 
   const d = q.data;
   document.getElementById('qStudentName').value = d.studentName||'';
+  document.getElementById('qTestLevel').value = d.testLevel||'';
+  document.getElementById('qTeacherComment').value = d.teacherComment||'';
   document.getElementById('qRemarks').value = d.remarks||'';
   document.getElementById('msgGifts').value = d.msgGifts||'';
   document.getElementById('msgTemplate').value = d.msgTemplate||'';
@@ -1581,7 +2936,8 @@ function loadQuote(i){
   document.getElementById('msgOutput').style.display='none';
 
   closeOverlay();
-  renderQPlan();
+  if(qCurrentView==='card') renderQPlanCards();
+  else renderQPlan();
   renderQDil();
 }
 
@@ -1599,6 +2955,8 @@ async function deleteQuote(i){
 function resetQuote(){
   if(!confirm('確定要重置報價單？'))return;
   document.getElementById('qStudentName').value='';
+  document.getElementById('qTestLevel').value='';
+  document.getElementById('qTeacherComment').value='';
   document.getElementById('qRemarks').value='';
   document.getElementById('msgGifts').value='';
   document.getElementById('msgTemplate').value='';
@@ -1613,7 +2971,292 @@ function resetQuote(){
     {period:'連續8周',plan:'輕鬆學(以上)',weekly:3,bonuses:[3]},
     {period:'連續8周',plan:'進階學(以上)',weekly:4,bonuses:[6]},
   ];
-  renderQPlan();renderQDil();
+  elecSelected.clear();
+  renderElecGrid();
+  renderQPlanCards();renderQDil();
+}
+
+/* ════════════════════════════════════════
+   選修課推薦系統
+   28 個課程資料庫
+════════════════════════════════════════ */
+// 等級定義（對應截圖的欄位：Pre-S / Starter / Lv1 / Lv2 / Lv3 / Lv4+）
+// 每個課程的 levels 陣列即為「有勾的欄位」
+const ELEC_COURSES = [
+  // ─── 入門基礎 ───
+  { id:'e01', name:'Pre-Starter 入門基礎',          cat:'入門基礎', levels:['Pre-Starter'],
+    desc:'30堂，為初學者建立字母發音與單字拼讀基礎',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#04' },
+  { id:'e02', name:'Pre-Starter 單字補充',           cat:'入門基礎', levels:['Pre-Starter'],
+    desc:'3系列×5堂，以生活主題補充初階詞彙（文具/天氣/動物…）',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#05' },
+  { id:'e03', name:'Letter Sounds 字母發音',         cat:'入門基礎', levels:['Pre-Starter','Starter'],
+    desc:'5堂，A–Z 字母名稱與發音系統學習',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#16' },
+  { id:'e04', name:'Supplement 發音及生字拼讀',      cat:'入門基礎', levels:['Pre-Starter','Starter'],
+    desc:'30堂，字母→生活單字→Be動詞句型，最初級漸進課程',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#03' },
+
+  // ─── 發音拼讀 ───
+  { id:'e05', name:'Phonics 自然發音',               cat:'發音拼讀', levels:['Starter','Lv1'],
+    desc:'8堂，長短母音與混合音，發展聲韻覺識與拼讀能力',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#28' },
+  { id:'e06', name:'Consonant Blends 子音混合音',    cat:'發音拼讀', levels:['Starter','Lv1'],
+    desc:'8堂，bl/tr/sp等混合音朗讀與拼字練習',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#17' },
+  { id:'e07', name:'Short Vowel Sounds 短母音',      cat:'發音拼讀', levels:['Starter','Lv1'],
+    desc:'5堂，a/e/i/o/u短音發音與拼讀技巧',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#18' },
+  { id:'e08', name:'Long Vowel Sounds 長母音',       cat:'發音拼讀', levels:['Lv1','Lv2'],
+    desc:'5堂，silent-e與ai/ay等長母音拼字規則',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#19' },
+  { id:'e09', name:'More Vowel Sounds 更多母音',     cat:'發音拼讀', levels:['Lv1','Lv2'],
+    desc:'r控制母音、二合字母與雙母音，進階自然發音',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#20' },
+  { id:'e10', name:'Decoding Syllables 音節解碼',   cat:'發音拼讀', levels:['Lv2','Lv3'],
+    desc:'2系列×4堂，音節辨識與切分，提升閱讀流暢度',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#23' },
+
+  // ─── 口說會話 ───
+  { id:'e11', name:'Supplement 閱讀及口說',          cat:'口說會話', levels:['Starter','Lv1'],
+    desc:'3系列×5堂，針對Starter等級加強閱讀與口說',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#02' },
+  { id:'e12', name:'Show and Tell 主題分享',         cat:'口說會話', levels:['Lv1','Lv2','Lv3'],
+    desc:'2系列×8堂，生活化主題英語口語分享，訓練邏輯表達',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#11' },
+  { id:'e13', name:'Conversation Corner 對話角',    cat:'口說會話', levels:['Lv2','Lv3','Lv4+'],
+    desc:'2系列×6堂，日常情境對話訓練，口語應用句型',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#15' },
+  { id:'e14', name:'Speak Up 會話課',               cat:'口說會話', levels:['Lv3','Lv4+'],
+    desc:'高等級主題討論課，培養口說、思考與反應能力（Lv5-6）',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#01' },
+
+  // ─── 文法寫作 ───
+  { id:'e15', name:'Basic Grammar 基礎文法',         cat:'文法寫作', levels:['Starter','Lv1'],
+    desc:'2系列×8堂，Be動詞/冠詞/否定句等最基礎句型結構',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#12' },
+  { id:'e16', name:'Grammar Series 文法系列',        cat:'文法寫作', levels:['Lv1','Lv2','Lv3'],
+    desc:'5系列×4堂，動詞/時態/條件句/子句等進階文法',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#13' },
+  { id:'e17', name:'5 Basic Sentence Structures 五大句型', cat:'文法寫作', levels:['Lv2','Lv3','Lv4+'],
+    desc:'英文五大句型（S+V, S+V+O等），理解句子結構與語序',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#21' },
+  { id:'e18', name:'Writing 寫作課',                 cat:'文法寫作', levels:['Lv3','Lv4+'],
+    desc:'3級別×5堂，從基礎句型到段落短文，含日記/描述文/看圖寫作',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#14' },
+
+  // ─── STEAM 跨域 ───
+  { id:'e19', name:'STEAM Coding Scratch',           cat:'STEAM跨域', levels:['Lv1','Lv2','Lv3'],
+    desc:'16堂，英文+程式設計，Scratch製作動畫與遊戲',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#06' },
+  { id:'e20', name:'STEAM 科學實驗',                 cat:'STEAM跨域', levels:['Lv2','Lv3','Lv4+'],
+    desc:'2系列×20堂，Lv3以上，英文學科學實驗（Lv3+）',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#07' },
+  { id:'e21', name:'STEAM Science DIY 手作',         cat:'STEAM跨域', levels:['Starter','Lv1','Lv2'],
+    desc:'2系列×10堂，科學知識+創意手作，英語操作與口說',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#08' },
+  { id:'e22', name:'English Math 英語數學',          cat:'STEAM跨域', levels:['Lv1','Lv2','Lv3'],
+    desc:'2系列×10堂，用英文表達數學概念，數字/時間/貨幣/形狀',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#22' },
+
+  // ─── 檢定考試 ───
+  { id:'e23', name:'YLE 劍橋英檢 Starters',         cat:'檢定考試', levels:['Lv1','Lv2'],
+    desc:'10堂，劍橋少兒英檢初級備考，聽說讀寫四項強化',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#09' },
+  { id:'e24', name:'YLE 劍橋英檢 Movers',           cat:'檢定考試', levels:['Lv2','Lv3'],
+    desc:'10堂，劍橋少兒英檢中級備考，模擬題型與策略',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#09' },
+  { id:'e25', name:'GEPT 全民英檢口說',              cat:'檢定考試', levels:['Lv3','Lv4+'],
+    desc:'2系列×3堂，全民英檢初/中級口說準備，模擬題型練習',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#10' },
+
+  // ─── 閱讀進階 ───
+  { id:'e26', name:'Daily Talk 日常生活會話',        cat:'閱讀進階', levels:['Lv1','Lv2','Lv3'],
+    desc:'2級別×10堂，情境式會話（超市/醫院/餐廳等10種情境）',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#25' },
+  { id:'e27', name:'Intermediate Grammar 中級文法',  cat:'閱讀進階', levels:['Lv2','Lv3'],
+    desc:'五種時態系列課程，現在/過去/未來/進行/完成式',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#26' },
+  { id:'e28', name:'Strategies for Reading Tests 閱讀技巧', cat:'閱讀進階', levels:['Lv3','Lv4+'],
+    desc:'5堂，閱讀策略訓練（找重點/預測/理解上下文），Lv3以上',
+    url:'https://blog.etalking.com.tw/lesson/sideprogram/#24' },
+];
+
+// 等級顯示順序
+const LEVEL_ORDER = ['Pre-Starter','Starter','Lv1','Lv2','Lv3','Lv4+'];
+
+// 當前選中的課程 ids
+let elecSelected = new Set();
+let elecCurrentLevel = 'all';
+let elecCurrentCat = 'all';
+
+/* ── 開啟 Modal ── */
+function openElecModal(){
+  renderElecCatTabs();
+  renderElecList();
+  updateElecCount();
+  openOverlay('elecModal');
+}
+
+/* ── 設定程度 → 自動推薦 ── */
+function setElecLevel(level){
+  elecCurrentLevel = level;
+  // 更新 level btn 樣式（用 querySelector 避免特殊字元問題）
+  document.querySelectorAll('.level-btn').forEach(btn=>{
+    btn.classList.remove('active');
+  });
+  const activeBtn = document.getElementById('lvl-'+level);
+  if(activeBtn) activeBtn.classList.add('active');
+  // 自動勾選推薦課程（不清掉已手動選的）
+  if(level !== 'all'){
+    ELEC_COURSES.forEach(c=>{
+      if(c.levels.includes(level)) elecSelected.add(c.id);
+    });
+  }
+  renderElecList();
+  updateElecCount();
+}
+
+/* ── 分類 Tab ── */
+function renderElecCatTabs(){
+  const cats = ['all', ...new Set(ELEC_COURSES.map(c=>c.cat))];
+  document.getElementById('elecCatTabs').innerHTML = cats.map(cat=>`
+    <button class="cat-tab ${cat===elecCurrentCat?'active':''}"
+      onclick="setElecCat('${cat}')">${cat==='all'?'全部分類':cat}</button>
+  `).join('');
+}
+
+function setElecCat(cat){
+  elecCurrentCat = cat;
+  renderElecCatTabs();
+  renderElecList();
+}
+
+/* ── 渲染課程列表 ── */
+function renderElecList(){
+  const list = document.getElementById('elecList');
+  list.innerHTML = ELEC_COURSES.map(c=>{
+    const isSelected = elecSelected.has(c.id);
+    const levelOk = elecCurrentLevel==='all' || c.levels.includes(elecCurrentLevel);
+    const catOk = elecCurrentCat==='all' || c.cat===elecCurrentCat;
+    const hidden = (!levelOk || !catOk) ? 'hidden' : '';
+    const isRec = elecCurrentLevel!=='all' && c.levels.includes(elecCurrentLevel);
+
+    return `<div class="elec-item ${isSelected?'selected':''} ${hidden}" onclick="toggleElec('${c.id}')" id="ei-${c.id}">
+      <div class="elec-check">${isSelected?'✓':''}</div>
+      <div class="elec-item-body">
+        <div class="elec-item-name">
+          <a href="${c.url}" target="_blank" onclick="event.stopPropagation()" title="查看官網介紹">${esc(c.name)} <span class="elec-link-icon">↗</span></a>
+          ${isRec?`<span class="elec-rec-badge">推薦</span>`:''}
+        </div>
+        ${c.desc?`<div style="font-size:11px;color:var(--text3);margin:2px 0 3px;line-height:1.4">${esc(c.desc)}</div>`:''}
+        <div class="elec-tags">
+          <span class="elec-tag level-tag">${c.levels.join(' · ')}</span>
+          <span class="elec-tag cat-tag">${c.cat}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── 勾選/取消 ── */
+function toggleElec(id){
+  if(elecSelected.has(id)) elecSelected.delete(id);
+  else elecSelected.add(id);
+  const item = document.getElementById('ei-'+id);
+  if(item){
+    item.classList.toggle('selected', elecSelected.has(id));
+    item.querySelector('.elec-check').textContent = elecSelected.has(id) ? '✓' : '';
+  }
+  updateElecCount();
+}
+
+function updateElecCount(){
+  document.getElementById('elecSelCount').textContent = `已選 ${elecSelected.size} 堂`;
+}
+
+function clearElecSel(){
+  elecSelected.clear();
+  renderElecList();
+  updateElecCount();
+}
+
+/* ── 確認加入方案卡 ── */
+function confirmElecSel(){
+  closeOverlay();
+  renderElecGrid();
+  if(qCurrentView==='card') renderQPlanCards();
+}
+
+/* ── 渲染右側格子卡片面板 ── */
+function renderElecGrid(){
+  const panel = document.getElementById('elecSidePanel');
+  const gridWrap = document.getElementById('elecGridWrap');
+  const selected = ELEC_COURSES.filter(c=>elecSelected.has(c.id));
+
+  // 只在名片卡視圖且有方案時才顯示側邊
+  const showSide = qCurrentView==='card' && qPlans.length > 0;
+  if(panel) panel.classList.toggle('hidden', !showSide);
+
+  // 表格模式時用舊 chips fallback（elecRecSection）
+  const fallback = document.getElementById('elecRecSection');
+  if(fallback) fallback.style.display = (qCurrentView==='table') ? '' : 'none';
+  if(qCurrentView==='table'){ renderElecChips(); }
+
+  if(!gridWrap) return;
+  if(selected.length === 0){
+    gridWrap.innerHTML = `<div class="elec-grid-empty">點「＋ 選擇」<br>開啟課程庫</div>`;
+    return;
+  }
+  gridWrap.innerHTML = selected.map(c=>`
+    <div class="elec-grid-card">
+      <div class="elec-grid-dot"></div>
+      <div class="elec-grid-body">
+        <div class="elec-grid-name">
+          <a href="${c.url}" target="_blank" onclick="event.stopPropagation()" title="官網介紹">${esc(c.name)}</a>
+          <span style="font-size:9px;opacity:.4">↗</span>
+        </div>
+        ${c.desc?`<div class="elec-grid-desc">${esc(c.desc)}</div>`:''}
+      </div>
+      <button class="elec-grid-remove no-print" onclick="removeElecChip('${c.id}')" title="移除">✕</button>
+    </div>
+  `).join('');
+}
+
+/* ── 舊版 chips（表格模式 fallback）── */
+function renderElecChips(){
+  const wrap = document.getElementById('elecChipsWrap');
+  if(!wrap) return;
+  const selected = ELEC_COURSES.filter(c=>elecSelected.has(c.id));
+  if(selected.length === 0){
+    wrap.innerHTML = '<span class="elec-rec-empty">尚未選擇推薦課程</span>';
+    return;
+  }
+  wrap.innerHTML = selected.map(c=>`
+    <a href="${c.url}" target="_blank" class="elec-chip" title="${c.cat} · ${c.levels.join('/')}">
+      <span class="elec-chip-dot"></span>
+      ${esc(c.name)}
+      <button class="elec-chip-remove no-print" onclick="event.preventDefault();removeElecChip('${c.id}')" title="移除">✕</button>
+    </a>
+  `).join('');
+}
+
+function removeElecChip(id){
+  elecSelected.delete(id);
+  renderElecGrid();
+  if(qCurrentView==='card') renderQPlanCards();
+}
+
+/* ── 方案卡內顯示選修課推薦（供 renderQPlanCards 引用） ── */
+function getElecRecHtml(){
+  const selected = ELEC_COURSES.filter(c=>elecSelected.has(c.id));
+  if(selected.length === 0) return '';
+  const items = selected.slice(0,6).map(c=>`<span style="display:inline-block;background:#fef3c7;border:1px solid #fde68a;border-radius:99px;padding:2px 8px;font-size:10px;color:#92400e;font-weight:600;margin:2px 2px 0 0">${esc(c.name)}</span>`).join('');
+  const more = selected.length > 6 ? `<span style="font-size:10px;color:#b45309;margin-left:2px">+${selected.length-6}</span>` : '';
+  return `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #fde68a">
+    <div style="font-size:9px;font-weight:700;color:#92400e;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">推薦選修課</div>
+    <div>${items}${more}</div>
+  </div>`;
 }
 
 /* ════════ 初始化 ════════ */
@@ -1627,7 +3270,9 @@ let qDils = [
 
 function initApp(){
   document.getElementById('monthlyGoal').value=localStorage.getItem('lily_goal')||300000;
-  initCal();renderBoard();renderQPlan();renderQDil();
+  initCal();renderBoard();renderQPlanCards();renderQDil();
+  // 初始確保視圖狀態正確
+  switchQView('card');
   // 啟動時自動從雲端拉取最新資料
   pullFromCloud().catch(e=>{ console.log('Initial cloud sync skipped:',e); });
 }
