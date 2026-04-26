@@ -1376,6 +1376,7 @@ table.dil-table{width:100%;border-collapse:collapse;}
     <div style="display:flex;gap:6px">
       <button onclick="testSyncConnection()" style="background:#1e40af;border:none;color:#93c5fd;font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:monospace">測試連線</button>
       <button onclick="checkPayloadSize()" style="background:#065f46;border:none;color:#6ee7b7;font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:monospace">檢查資料量</button>
+      <button onclick="fixAndSync()" style="background:#7c2d12;border:none;color:#fed7aa;font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:monospace">🔧 修復並同步</button>
       <button onclick="toggleSyncDebug()" style="background:#1e293b;border:none;color:#64748b;font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer">✕</button>
     </div>
   </div>
@@ -1658,10 +1659,27 @@ function jsonpRequest(url){
 
 async function cloudPost(action, body){
   const encoded = encodeURIComponent(JSON.stringify(body));
+  syncLog(`cloudPost ${action}: ${encoded.length} 字元`);
   return jsonpRequest(API_URL+'?action='+action+'&key='+API_KEY+'&payload='+encoded);
 }
 async function cloudGet(action){
   return jsonpRequest(API_URL+'?action='+action+'&key='+API_KEY);
+}
+
+// 上傳前精簡資料：只保留 CRM 核心欄位，大欄位留在 localStorage
+function slimStudent(s){
+  return {
+    id: s.id,
+    name: s.name,
+    status: s.status,
+    plan: s.plan,
+    customAmount: s.customAmount,
+    time: s.time,
+    contact: s.contact,
+    note: s.note,
+    testLevel: s.testLevel,       // 短字串，保留
+    teacherComment: s.teacherComment ? s.teacherComment.substring(0,80) : '', // 截到80字
+  };
 }
 
 // 上傳到雲端（背景執行，不阻塞UI）
@@ -1670,12 +1688,25 @@ async function pushToCloud(){
   isSyncing=true;
   setSyncStatus('上傳中...','var(--accent)');
   try{
-    await cloudPost('saveStudents', data);
+    const slimData = data.map(slimStudent);
+    const encoded = encodeURIComponent(JSON.stringify(slimData)).length;
+    syncLog(`精簡後 payload: ${encoded} 字元（原 ${encodeURIComponent(JSON.stringify(data)).length}）`);
+
+    if(encoded > 7500){
+      // 仍然太大：分批傳（每次傳一半）
+      syncLog('仍太大，分兩批上傳...');
+      const half = Math.ceil(slimData.length/2);
+      await cloudPost('saveStudents', slimData.slice(0, half));
+      await cloudPost('saveStudentsAppend', slimData.slice(half));
+    } else {
+      await cloudPost('saveStudents', slimData);
+    }
     await cloudPost('saveStatuses', statuses);
     setSyncStatus('✓ 已同步','var(--success)');
     setTimeout(()=>setSyncStatus('',''),3000);
   }catch(e){
     console.error('Cloud push error:',e);
+    syncLog(`pushToCloud 失敗: ${e.message}`);
     setSyncStatus('同步失敗','var(--danger)');
   }
   isSyncing=false;
@@ -1813,6 +1844,57 @@ function checkPayloadSize(){
   }
   syncLog(`localStorage 總使用: ${JSON.stringify(localStorage).length} 字元`);
 }
+async function fixAndSync(){
+  syncLog('=== 🔧 修復並同步 ===');
+
+  // Step 1：把每筆資料精簡（截掉過長的 teacherComment）
+  let trimCount = 0;
+  data = data.map(s => {
+    const slim = {...s};
+    if((slim.teacherComment||'').length > 60){
+      slim.teacherComment = slim.teacherComment.substring(0,60);
+      trimCount++;
+    }
+    return slim;
+  });
+  localStorage.setItem('lily_crm_vFinal', JSON.stringify(data));
+  syncLog(`已精簡 ${trimCount} 筆評語（截到60字）`);
+
+  // Step 2：確認 payload 大小
+  const size = encodeURIComponent(JSON.stringify(data)).length;
+  syncLog(`精簡後 payload: ${size} 字元 ${size > 7500 ? '⚠️ 仍然太大' : '✓ 正常'}`);
+
+  if(size > 7500){
+    syncLog('⚠️ 資料量仍超標，嘗試只上傳核心欄位...');
+    data = data.map(s => ({
+      id: s.id, name: s.name, status: s.status,
+      plan: s.plan, customAmount: s.customAmount,
+      time: s.time, contact: s.contact,
+      note: (s.note||'').substring(0,50),
+      testLevel: s.testLevel||'',
+      teacherComment: (s.teacherComment||'').substring(0,30),
+    }));
+    localStorage.setItem('lily_crm_vFinal', JSON.stringify(data));
+    const size2 = encodeURIComponent(JSON.stringify(data)).length;
+    syncLog(`再次精簡後: ${size2} 字元`);
+  }
+
+  // Step 3：執行同步
+  syncLog('開始上傳...');
+  try{
+    await cloudPost('saveStudents', data);
+    syncLog('✅ 學員資料上傳成功！');
+    await cloudPost('saveStatuses', statuses);
+    syncLog('✅ 狀態設定上傳成功！');
+    setSyncStatus('✓ 已同步','var(--success)');
+    setTimeout(()=>setSyncStatus('',''),3000);
+    syncLog('=== 修復完成 🎉 ===');
+  }catch(e){
+    syncLog(`❌ 上傳失敗: ${e.message}`);
+    syncLog('→ 請截圖這個 log 給我看');
+  }
+}
+
 function switchPage(pageId,el){
   document.querySelectorAll('.page-content,.tab-item').forEach(x=>x.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');el.classList.add('active');
