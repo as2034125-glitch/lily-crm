@@ -1606,107 +1606,92 @@ let currentEditId=null,pendingDeleteId=null,draggedId=null;
 let selectedPlanName=null,selectedPlanAmount=null,isCustomPlan=false;
 let calendarInstance=null;
 
-/* ════════ 雲端同步（JSONP 方式，完全繞過 CORS）════════ */
+/* ════════ 雲端同步 ════════
+   GET（讀取）→ JSONP（不受 CORS 限制）
+   POST（寫入）→ fetch（不受 URL 長度限制）
+════════════════════════════════════════ */
 function setSyncStatus(msg, color){
   const el=document.getElementById('syncStatus');
   if(el){el.textContent=msg; el.style.color=color||'var(--text3)';}
 }
 
-// 同步診斷 log（顯示在頁面上）
 function syncLog(msg){
   console.log('[SYNC]', msg);
   const el=document.getElementById('syncDebugLog');
-  if(el){ el.textContent = (el.textContent||'') + '\n' + new Date().toLocaleTimeString() + ' ' + msg; el.scrollTop=el.scrollHeight; }
+  if(el){ el.textContent=(el.textContent||'')+'\n'+new Date().toLocaleTimeString()+' '+msg; el.scrollTop=el.scrollHeight; }
 }
 
-// JSONP 請求：用 script 標籤載入，完全不受 CORS 限制
-let jsonpCounter = 0;
+/* ── JSONP（用於 GET 讀取）── */
+let jsonpCounter=0;
 function jsonpRequest(url){
-  return new Promise((resolve, reject)=>{
-    const cbName = '_jsonp_cb_' + (jsonpCounter++);
+  return new Promise((resolve,reject)=>{
+    const cbName='_jsonp_cb_'+(jsonpCounter++);
     syncLog(`JSONP 發送: ${url.substring(0,80)}...`);
-
-    const timeout = setTimeout(()=>{
+    const timeout=setTimeout(()=>{
       delete window[cbName];
       if(script.parentNode) script.remove();
       syncLog('❌ TIMEOUT（15秒沒回應）');
       reject(new Error('Request timeout'));
-    }, 15000);
-
-    window[cbName] = function(data){
+    },15000);
+    window[cbName]=function(data){
       clearTimeout(timeout);
       delete window[cbName];
       if(script.parentNode) script.remove();
       syncLog(`✅ 收到回應: ${JSON.stringify(data).substring(0,60)}`);
       resolve(data);
     };
-
-    const sep = url.includes('?') ? '&' : '?';
-    const script = document.createElement('script');
-    const fullUrl = url + sep + 'callback=' + cbName;
+    const script=document.createElement('script');
+    const fullUrl=url+(url.includes('?')?'&':'?')+'callback='+cbName;
     syncLog(`完整 URL 長度: ${fullUrl.length} 字元`);
-    script.src = fullUrl;
-    script.onerror = (e)=>{
+    script.src=fullUrl;
+    script.onerror=(e)=>{
       clearTimeout(timeout);
       delete window[cbName];
       if(script.parentNode) script.remove();
-      syncLog(`❌ Script 載入失敗: ${e.type || e}`);
+      syncLog(`❌ Script 載入失敗: ${e.type||e}`);
       reject(new Error('Script load error'));
     };
     document.body.appendChild(script);
   });
 }
 
-async function cloudPost(action, body){
-  const encoded = encodeURIComponent(JSON.stringify(body));
-  syncLog(`cloudPost ${action}: ${encoded.length} 字元`);
-  return jsonpRequest(API_URL+'?action='+action+'&key='+API_KEY+'&payload='+encoded);
+/* ── fetch POST（用於寫入，無 URL 長度限制）── */
+async function fetchPost(action, body){
+  const payload=JSON.stringify({action, key:API_KEY, data:body});
+  syncLog(`fetch POST ${action}: ${payload.length} 字元`);
+  const res=await fetch(API_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain'}, // Apps Script 需要 text/plain 才不會 preflight
+    body:payload,
+    redirect:'follow',
+  });
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text=await res.text();
+  syncLog(`POST 回應: ${text.substring(0,80)}`);
+  try{ return JSON.parse(text); }catch{ return text; }
 }
+
 async function cloudGet(action){
   return jsonpRequest(API_URL+'?action='+action+'&key='+API_KEY);
 }
 
-// 上傳前精簡資料：只保留 CRM 核心欄位，大欄位留在 localStorage
-function slimStudent(s){
-  return {
-    id: s.id,
-    name: s.name,
-    status: s.status,
-    plan: s.plan,
-    customAmount: s.customAmount,
-    time: s.time,
-    contact: s.contact,
-    note: s.note,
-    testLevel: s.testLevel,       // 短字串，保留
-    teacherComment: s.teacherComment ? s.teacherComment.substring(0,80) : '', // 截到80字
-  };
-}
-
-// 上傳到雲端（背景執行，不阻塞UI）
+/* ── 上傳（用 POST）── */
 async function pushToCloud(){
   if(isSyncing) return;
   isSyncing=true;
   setSyncStatus('上傳中...','var(--accent)');
   try{
-    const slimData = data.map(slimStudent);
-    const encoded = encodeURIComponent(JSON.stringify(slimData)).length;
-    syncLog(`精簡後 payload: ${encoded} 字元（原 ${encodeURIComponent(JSON.stringify(data)).length}）`);
-
-    if(encoded > 7500){
-      // 仍然太大：分批傳（每次傳一半）
-      syncLog('仍太大，分兩批上傳...');
-      const half = Math.ceil(slimData.length/2);
-      await cloudPost('saveStudents', slimData.slice(0, half));
-      await cloudPost('saveStudentsAppend', slimData.slice(half));
-    } else {
-      await cloudPost('saveStudents', slimData);
-    }
-    await cloudPost('saveStatuses', statuses);
+    const size=JSON.stringify(data).length;
+    syncLog(`上傳學員資料: ${size} 字元，${data.length} 筆`);
+    await fetchPost('saveStudents', data);
+    syncLog('✅ 學員資料上傳成功');
+    await fetchPost('saveStatuses', statuses);
+    syncLog('✅ 狀態設定上傳成功');
     setSyncStatus('✓ 已同步','var(--success)');
     setTimeout(()=>setSyncStatus('',''),3000);
   }catch(e){
     console.error('Cloud push error:',e);
-    syncLog(`pushToCloud 失敗: ${e.message}`);
+    syncLog(`❌ 上傳失敗: ${e.message}`);
     setSyncStatus('同步失敗','var(--danger)');
   }
   isSyncing=false;
@@ -1846,52 +1831,21 @@ function checkPayloadSize(){
 }
 async function fixAndSync(){
   syncLog('=== 🔧 修復並同步 ===');
-
-  // Step 1：把每筆資料精簡（截掉過長的 teacherComment）
-  let trimCount = 0;
-  data = data.map(s => {
-    const slim = {...s};
-    if((slim.teacherComment||'').length > 60){
-      slim.teacherComment = slim.teacherComment.substring(0,60);
-      trimCount++;
-    }
-    return slim;
-  });
-  localStorage.setItem('lily_crm_vFinal', JSON.stringify(data));
-  syncLog(`已精簡 ${trimCount} 筆評語（截到60字）`);
-
-  // Step 2：確認 payload 大小
-  const size = encodeURIComponent(JSON.stringify(data)).length;
-  syncLog(`精簡後 payload: ${size} 字元 ${size > 7500 ? '⚠️ 仍然太大' : '✓ 正常'}`);
-
-  if(size > 7500){
-    syncLog('⚠️ 資料量仍超標，嘗試只上傳核心欄位...');
-    data = data.map(s => ({
-      id: s.id, name: s.name, status: s.status,
-      plan: s.plan, customAmount: s.customAmount,
-      time: s.time, contact: s.contact,
-      note: (s.note||'').substring(0,50),
-      testLevel: s.testLevel||'',
-      teacherComment: (s.teacherComment||'').substring(0,30),
-    }));
-    localStorage.setItem('lily_crm_vFinal', JSON.stringify(data));
-    const size2 = encodeURIComponent(JSON.stringify(data)).length;
-    syncLog(`再次精簡後: ${size2} 字元`);
-  }
-
-  // Step 3：執行同步
-  syncLog('開始上傳...');
+  syncLog(`資料量: ${JSON.stringify(data).length} 字元，${data.length} 筆`);
+  syncLog('使用 fetch POST，無 URL 長度限制...');
   try{
-    await cloudPost('saveStudents', data);
+    await fetchPost('saveStudents', data);
     syncLog('✅ 學員資料上傳成功！');
-    await cloudPost('saveStatuses', statuses);
+    await fetchPost('saveStatuses', statuses);
     syncLog('✅ 狀態設定上傳成功！');
     setSyncStatus('✓ 已同步','var(--success)');
     setTimeout(()=>setSyncStatus('',''),3000);
     syncLog('=== 修復完成 🎉 ===');
   }catch(e){
     syncLog(`❌ 上傳失敗: ${e.message}`);
-    syncLog('→ 請截圖這個 log 給我看');
+    syncLog('→ Apps Script 需要更新，請看下方說明');
+    syncLog('  如果看到 "Failed to fetch" 或 CORS 錯誤');
+    syncLog('  代表 Apps Script 還未支援 POST，需要重新部署');
   }
 }
 
