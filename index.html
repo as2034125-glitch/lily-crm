@@ -129,6 +129,32 @@ header{
 
 /* ─── 業績 ─── */
 .sales-page{flex-direction:column;padding:22px;overflow-y:auto;background:var(--bg);gap:18px;}
+
+/* 漏斗統計 */
+.funnel-row{
+  display:flex;gap:0;margin-bottom:4px;border-radius:var(--radius);overflow:hidden;
+  border:1px solid var(--border);background:var(--bg2);
+}
+.funnel-card{
+  flex:1;padding:14px 16px;text-align:center;position:relative;
+  border-right:1px solid var(--border);
+}
+.funnel-card:last-child{border-right:none;}
+.funnel-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;}
+.funnel-num{font-size:28px;font-weight:900;font-family:var(--font-en);line-height:1;margin-bottom:4px;}
+.funnel-sub{font-size:10px;color:var(--text3);font-family:var(--font-en);}
+.funnel-rate{font-size:10px;font-weight:700;margin-top:4px;}
+
+/* 摘要+明細 grid */
+.sales-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:800px){.sales-grid{grid-template-columns:1fr;}}
+.sales-summary-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;display:flex;flex-direction:column;
+}
+.sales-card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.sales-summary-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;color:var(--text2);}
+.value-big{font-size:18px;font-weight:800;font-family:var(--font-en);}
 .sales-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
 .stat-card{background:var(--bg2);padding:20px 22px;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden;}
 .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent-d));}
@@ -1154,33 +1180,63 @@ table.dil-table{width:100%;border-collapse:collapse;}
 
 <!-- ═══ 業績 ═══ -->
 <div id="sales-page" class="page-content sales-page">
-  <div class="sales-summary">
-    <div class="stat-card">
-      <div class="label">本月目標業績</div>
-      <div style="display:flex;align-items:baseline;gap:4px">
-        <span style="font-size:13px;color:var(--text3);font-family:var(--font-en)">NT$</span>
-        <input type="number" id="monthlyGoal" value="300000" onchange="updateSalesUI()"
-          style="border:none;font-size:26px;font-weight:700;width:170px;outline:none;background:transparent;color:var(--text);font-family:var(--font-en)">
+  <!-- 月份標題 -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 12px;flex-wrap:wrap;gap:8px">
+    <div style="font-size:16px;font-weight:700;color:var(--text)" id="salesMonthTitle">2026年4月 業績總覽</div>
+  </div>
+
+  <!-- 漏斗統計 -->
+  <div class="funnel-row" id="funnelRow">
+    <!-- JS 動態產生 -->
+  </div>
+
+  <!-- 摘要 + 明細 -->
+  <div class="sales-grid">
+    <!-- 左：摘要 -->
+    <div class="sales-summary-card">
+      <div class="sales-card-title">📊 月度摘要</div>
+      <div class="sales-summary-row">
+        <span>月目標業績</span>
+        <span style="display:flex;align-items:baseline;gap:2px">
+          <span style="font-size:11px;color:var(--text3)">NT$</span>
+          <input type="number" id="monthlyGoal" value="300000" onchange="updateSalesUI();persist()"
+            style="border:none;font-size:20px;font-weight:700;width:130px;outline:none;background:transparent;color:var(--text);font-family:var(--font-en);text-align:right">
+        </span>
+      </div>
+      <div class="sales-summary-row">
+        <span>已成交金額</span>
+        <span class="value-big" id="currentSales" style="color:var(--success)">NT$0</span>
+      </div>
+      <div class="sales-summary-row">
+        <span>達成率</span>
+        <span class="value-big" id="achievementRate" style="color:var(--accent)">0%</span>
+      </div>
+      <div style="margin:8px 0">
+        <div class="progress-container"><div class="progress-bar" id="salesProgress" style="width:0%"></div></div>
+      </div>
+      <div class="sales-summary-row" style="font-size:12px;color:var(--text3)">
+        <span>成交筆數</span>
+        <span id="dealCount">0 筆</span>
+      </div>
+      <div class="sales-summary-row" style="font-size:12px;color:var(--text3)">
+        <span>平均客單價</span>
+        <span id="avgDealPrice">NT$0</span>
+      </div>
+      <div class="sales-summary-row" style="font-size:12px;color:var(--text3)">
+        <span>距目標差額</span>
+        <span id="gapToGoal">NT$0</span>
       </div>
     </div>
-    <div class="stat-card">
-      <div class="label">目前累積業績</div>
-      <div class="value" id="currentSales">NT$ 0</div>
-      <div class="progress-container"><div class="progress-bar" id="salesProgress" style="width:0%"></div></div>
-    </div>
-    <div class="stat-card">
-      <div class="label">目標達成率</div>
-      <div class="value" id="achievementRate" style="color:var(--accent)">0%</div>
-      <div class="sub" id="dealCount">成交人數：0 人</div>
-    </div>
-  </div>
-  <div class="sales-detail-card">
-    <h3>本月成交明細 <button class="btn btn-ghost btn-sm" onclick="exportSalesExcel()">↓ 匯出明細</button></h3>
-    <div style="overflow:auto">
-      <table class="excel-table">
-        <thead><tr><th>日期</th><th>姓名</th><th>購買方案</th><th>金額</th></tr></thead>
-        <tbody id="sales-detail-body"></tbody>
-      </table>
+
+    <!-- 右：成交明細 -->
+    <div class="sales-detail-card">
+      <div class="sales-card-title">📋 成交明細 <button class="btn btn-ghost btn-sm" onclick="exportSalesExcel()" style="font-size:11px">↓ 匯出</button></div>
+      <div style="overflow:auto;flex:1">
+        <table class="excel-table">
+          <thead><tr><th>日期</th><th>姓名</th><th>購買方案</th><th>金額</th></tr></thead>
+          <tbody id="sales-detail-body"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -1606,6 +1662,34 @@ let currentEditId=null,pendingDeleteId=null,draggedId=null;
 let selectedPlanName=null,selectedPlanAmount=null,isCustomPlan=false;
 let calendarInstance=null;
 
+/* ════════ 共用月份狀態 ════════ */
+let currentMonth = new Date().getMonth();   // 0-11
+let currentYear  = new Date().getFullYear();
+
+function getMonthKey(y,m){ return `${y}-${String(m+1).padStart(2,'0')}`; }
+function getCurrentMonthKey(){ return getMonthKey(currentYear, currentMonth); }
+function isInCurrentMonth(timeStr){
+  if(!timeStr) return false;
+  const d = new Date(timeStr);
+  return d.getFullYear()===currentYear && d.getMonth()===currentMonth;
+}
+function navigateMonth(delta){
+  currentMonth += delta;
+  if(currentMonth > 11){ currentMonth=0; currentYear++; }
+  if(currentMonth < 0){ currentMonth=11; currentYear--; }
+  // 同步行事曆
+  if(calendarInstance){
+    const dt = new Date(currentYear, currentMonth, 1);
+    calendarInstance.gotoDate(dt);
+  }
+  onMonthChanged();
+}
+function onMonthChanged(){
+  renderBoard();
+  updateSalesUI();
+  renderList();
+}
+
 /* ════════ 雲端同步 ════════
    GET（讀取）→ JSONP（不受 CORS 限制）
    POST（寫入）→ fetch（不受 URL 長度限制）
@@ -1872,7 +1956,16 @@ function initCal(){
       if(item){const d=info.event.start,pad=n=>String(n).padStart(2,'0'),t=item.time.split('T')[1]||'09:00';
         item.time=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${t}`;persist();renderBoard();updateSalesUI();}
     },
-    eventDidMount:info=>{info.el.oncontextmenu=e=>showCtxMenu(e,info.event.id);}
+    eventDidMount:info=>{info.el.oncontextmenu=e=>showCtxMenu(e,info.event.id);},
+    datesSet:info=>{
+      // 行事曆翻頁時同步全域月份
+      const mid = new Date(info.start.getTime() + (info.end.getTime()-info.start.getTime())/2);
+      if(mid.getMonth()!==currentMonth || mid.getFullYear()!==currentYear){
+        currentMonth=mid.getMonth();
+        currentYear=mid.getFullYear();
+        onMonthChanged();
+      }
+    }
   });
   calendarInstance.render();
 }
@@ -1880,23 +1973,50 @@ function initCal(){
 /* ════════ 看板 ════════ */
 function renderBoard(){
   const board=document.getElementById('board');board.innerHTML='';
+  // 只取當月學員
+  const monthData = data.filter(x=>isInCurrentMonth(x.time));
+
   statuses.forEach(s=>{
-    const cnt=data.filter(x=>x.status===s.name).length;
+    const items = monthData.filter(x=>x.status===s.name);
     const col=document.createElement('div');col.className='column';
-    col.innerHTML=`<div class="column-header" style="background:${s.color}14"><div class="col-title"><div class="col-dot" style="background:${s.color}"></div>${esc(s.name)}</div><span class="col-count">${cnt}</span></div><div class="list-area"></div>`;
+    col.innerHTML=`<div class="column-header" style="background:${s.color}14"><div class="col-title"><div class="col-dot" style="background:${s.color}"></div>${esc(s.name)}</div><span class="col-count">${items.length}</span></div><div class="list-area"></div>`;
     col.ondragover=e=>e.preventDefault();
     col.ondrop=()=>{const item=data.find(x=>x.id==draggedId);if(item){item.status=s.name;persist();refreshCal();renderBoard();updateSalesUI();}};
     const area=col.querySelector('.list-area');
-    data.filter(x=>x.status===s.name).sort((a,b)=>new Date(a.time)-new Date(b.time)).forEach(item=>{
+    items.sort((a,b)=>new Date(a.time)-new Date(b.time)).forEach(item=>{
       const d=new Date(item.time),enDate=d.toLocaleDateString('en-US',{month:'short',day:'numeric',weekday:'short'}),tp=item.time.split('T')[1]||'';
       const card=document.createElement('div');card.className='card';card.draggable=true;card.style.borderLeftColor=s.color;
       const pl=item.plan?(item.customAmount?`✏️ ${item.plan}`:`💎 ${item.plan}`):'';
       const lvBadge=item.testLevel?`<span style="display:inline-block;background:#e0f2fe;color:#0369a1;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-top:3px">${esc(item.testLevel)}</span>`:'';
-      card.innerHTML=`<div class="card-name">${esc(item.name)}</div><span class="card-time">${enDate} · ${tp}</span>${pl?`<span class="card-plan">${esc(pl)}</span>`:''}${lvBadge}`;      card.onclick=()=>openModal(item.id);
+      card.innerHTML=`<div class="card-name">${esc(item.name)}</div><span class="card-time">${enDate} · ${tp}</span>${pl?`<span class="card-plan">${esc(pl)}</span>`:''}${lvBadge}`;
+      card.onclick=()=>openModal(item.id);
       card.oncontextmenu=e=>showCtxMenu(e,item.id);
-      card.ondragstart=()=>{draggedId=item.id;};
+      card.ondragstart=e=>{draggedId=item.id;e.dataTransfer.effectAllowed='move';card.style.opacity='0.5';};
+      card.ondragend=()=>{card.style.opacity='1';};
+      // 觸控拖曳支援
+      let touchTimeout=null;
+      card.ontouchstart=e=>{
+        touchTimeout=setTimeout(()=>{
+          draggedId=item.id;
+          card.style.opacity='0.5';
+          card.classList.add('dragging');
+        },300);
+      };
+      card.ontouchend=()=>{
+        clearTimeout(touchTimeout);
+        card.style.opacity='1';
+        card.classList.remove('dragging');
+      };
       area.appendChild(card);
     });
+    // 列間拖放目標觸控支援
+    area.ontouchend=e=>{
+      if(draggedId){
+        const item=data.find(x=>x.id==draggedId);
+        if(item){item.status=s.name;persist();refreshCal();renderBoard();updateSalesUI();}
+        draggedId=null;
+      }
+    };
     board.appendChild(col);
   });
 }
@@ -1904,8 +2024,10 @@ function renderBoard(){
 /* ════════ 清單 ════════ */
 function renderList(){
   const kw=document.getElementById('listSearch').value.toLowerCase();
+  // 只顯示當月學員
+  const monthData = data.filter(x=>isInCurrentMonth(x.time));
   document.getElementById('list-body').innerHTML=
-    data.filter(x=>x.name.toLowerCase().includes(kw)).sort((a,b)=>new Date(b.time)-new Date(a.time))
+    monthData.filter(x=>x.name.toLowerCase().includes(kw)).sort((a,b)=>new Date(b.time)-new Date(a.time))
       .map(item=>{const c=(statuses.find(s=>s.name===item.status)||{}).color||'#999';
         return `<tr onclick="openModal(${item.id})" oncontextmenu="showCtxMenu(event,${item.id})">
           <td><b style="color:var(--text)">${esc(item.name)}</b></td>
@@ -1917,18 +2039,77 @@ function renderList(){
 
 /* ════════ 業績 ════════ */
 function updateSalesUI(){
-  const goal=parseFloat(document.getElementById('monthlyGoal').value)||1,n=new Date();
-  const deals=data.filter(x=>{const d=new Date(x.time);return x.status==='成交'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();});
-  const total=deals.reduce((s,x)=>s+getPlanAmount(x),0),rate=Math.round((total/goal)*100);
-  document.getElementById('currentSales').textContent=`NT$ ${total.toLocaleString()}`;
+  const goal=parseFloat(document.getElementById('monthlyGoal').value)||1;
+  // 當月學員
+  const monthData = data.filter(x=>isInCurrentMonth(x.time));
+
+  // 月份標題
+  const titleEl=document.getElementById('salesMonthTitle');
+  if(titleEl) titleEl.textContent=`${currentYear}年${currentMonth+1}月 業績總覽`;
+
+  // ── 漏斗統計 ──
+  const funnelDef=[
+    {label:'已邀約',  match:s=>s==='已邀約',  color:'#54a0ff'},
+    {label:'已DEMO',  match:s=>s==='已DEMO'||s==='未DEMO', color:'#1dd1a1'},
+    {label:'成交',    match:s=>s==='成交',    color:'#a29bfe'},
+    {label:'取消',    match:s=>s==='取消',    color:'#ee5253'},
+  ];
+  const funnelRow=document.getElementById('funnelRow');
+  if(funnelRow){
+    const totalInvited = monthData.length;
+    const demoCount = monthData.filter(x=>x.status==='已DEMO'||x.status==='未DEMO'||x.status==='成交').length;
+    const dealCount = monthData.filter(x=>x.status==='成交').length;
+    const cancelCount = monthData.filter(x=>x.status==='取消').length;
+
+    const demoRate = totalInvited>0 ? Math.round(demoCount/totalInvited*100) : 0;
+    const dealRate = demoCount>0 ? Math.round(dealCount/demoCount*100) : 0;
+
+    funnelRow.innerHTML = `
+      <div class="funnel-card">
+        <div class="funnel-label">總邀約</div>
+        <div class="funnel-num" style="color:#54a0ff">${totalInvited}</div>
+        <div class="funnel-sub">組家長</div>
+      </div>
+      <div class="funnel-card">
+        <div class="funnel-label">已 DEMO</div>
+        <div class="funnel-num" style="color:#1dd1a1">${demoCount}</div>
+        <div class="funnel-sub">組家長</div>
+        <div class="funnel-rate" style="color:#1dd1a1">DEMO 率 ${demoRate}%</div>
+      </div>
+      <div class="funnel-card">
+        <div class="funnel-label">成交</div>
+        <div class="funnel-num" style="color:#a29bfe">${dealCount}</div>
+        <div class="funnel-sub">筆</div>
+        <div class="funnel-rate" style="color:#a29bfe">成交率 ${dealRate}%</div>
+      </div>
+      <div class="funnel-card">
+        <div class="funnel-label">取消</div>
+        <div class="funnel-num" style="color:#ee5253">${cancelCount}</div>
+        <div class="funnel-sub">組家長</div>
+      </div>
+    `;
+  }
+
+  // ── 摘要 ──
+  const deals = monthData.filter(x=>x.status==='成交');
+  const total = deals.reduce((s,x)=>s+getPlanAmount(x),0);
+  const rate = Math.round((total/goal)*100);
+  const avg = deals.length>0 ? Math.round(total/deals.length) : 0;
+  const gap = Math.max(0, goal-total);
+
+  document.getElementById('currentSales').textContent=`NT$${total.toLocaleString()}`;
   document.getElementById('achievementRate').textContent=`${rate}%`;
   document.getElementById('salesProgress').style.width=`${Math.min(rate,100)}%`;
-  document.getElementById('dealCount').textContent=`成交人數：${deals.length} 人`;
+  document.getElementById('dealCount').textContent=`${deals.length} 筆`;
+  document.getElementById('avgDealPrice').textContent=`NT$${avg.toLocaleString()}`;
+  document.getElementById('gapToGoal').textContent=total>=goal?'🎉 已達標！':`NT$${gap.toLocaleString()}`;
+
+  // ── 成交明細 ──
   document.getElementById('sales-detail-body').innerHTML=
     deals.sort((a,b)=>new Date(b.time)-new Date(a.time)).map(x=>{
       const amt=getPlanAmount(x),pl=x.customAmount?`✏️ ${x.plan||'自訂'}`:x.plan||'未設定';
-      return `<tr><td style="font-family:var(--font-en)">${esc(x.time.split('T')[0])}</td><td>${esc(x.name)}</td><td style="color:var(--gold)">${esc(pl)}</td><td style="font-family:var(--font-en);color:var(--success)">NT$ ${amt.toLocaleString()}</td></tr>`;}).join('');
-  persist();
+      return `<tr><td style="font-family:var(--font-en)">${esc(x.time.split('T')[0])}</td><td>${esc(x.name)}</td><td style="color:var(--gold)">${esc(pl)}</td><td style="font-family:var(--font-en);color:var(--success)">NT$ ${amt.toLocaleString()}</td></tr>`;}).join('')
+    || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">本月尚無成交紀錄</td></tr>';
 }
 
 /* ════════ 匯出 ════════ */
@@ -1938,12 +2119,11 @@ function exportExcel(){
   XLSX.writeFile(wb,`Lily學員清單_${new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')}.xlsx`);
 }
 function exportSalesExcel(){
-  const n=new Date();
-  const deals=data.filter(x=>{const d=new Date(x.time);return x.status==='成交'&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();});
+  const deals=data.filter(x=>isInCurrentMonth(x.time)&&x.status==='成交');
   const rows=deals.map(x=>({'日期':x.time.split('T')[0],'姓名':x.name,'購買方案':x.plan||'未設定','金額':getPlanAmount(x)}));
   rows.push({'日期':'','姓名':'合計','購買方案':'','金額':rows.reduce((s,r)=>s+r['金額'],0)});
-  const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'本月成交');
-  XLSX.writeFile(wb,`Lily業績明細_${n.getFullYear()}-${n.getMonth()+1}.xlsx`);
+  const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'成交明細');
+  XLSX.writeFile(wb,`Lily業績明細_${currentYear}-${currentMonth+1}.xlsx`);
 }
 
 /* ════════ 右鍵選單 ════════ */
