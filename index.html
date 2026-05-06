@@ -1771,6 +1771,12 @@ async function pushToCloud(){
     syncLog('✅ 學員資料上傳成功');
     await fetchPost('saveStatuses', statuses);
     syncLog('✅ 狀態設定上傳成功');
+    // 報價單同步
+    const quotes = JSON.parse(localStorage.getItem('lily_quotes')||'[]');
+    if(quotes.length > 0){
+      await fetchPost('saveQuotes', quotes);
+      syncLog(`✅ 報價單上傳成功（${quotes.length} 筆）`);
+    }
     setSyncStatus('✓ 已同步','var(--success)');
     setTimeout(()=>setSyncStatus('',''),3000);
   }catch(e){
@@ -1922,14 +1928,17 @@ async function fixAndSync(){
     syncLog('✅ 學員資料上傳成功！');
     await fetchPost('saveStatuses', statuses);
     syncLog('✅ 狀態設定上傳成功！');
+    const quotes = JSON.parse(localStorage.getItem('lily_quotes')||'[]');
+    if(quotes.length > 0){
+      await fetchPost('saveQuotes', quotes);
+      syncLog(`✅ 報價單上傳成功！（${quotes.length} 筆）`);
+    }
     setSyncStatus('✓ 已同步','var(--success)');
     setTimeout(()=>setSyncStatus('',''),3000);
     syncLog('=== 修復完成 🎉 ===');
   }catch(e){
     syncLog(`❌ 上傳失敗: ${e.message}`);
     syncLog('→ Apps Script 需要更新，請看下方說明');
-    syncLog('  如果看到 "Failed to fetch" 或 CORS 錯誤');
-    syncLog('  代表 Apps Script 還未支援 POST，需要重新部署');
   }
 }
 
