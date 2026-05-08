@@ -167,87 +167,93 @@ header{
 .sales-detail-card h3{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
 
 /* ══════════════════════════════════════
-   報價單頁面
+   報價單頁面 — Wizard 版
 ══════════════════════════════════════ */
 .quote-page{
   flex-direction:column;overflow:auto!important;
   background:var(--bg);padding:20px 24px 80px;
   -webkit-overflow-scrolling:touch;
 }
+
+/* 步驟導航列 */
+.q-steps{
+  display:flex;gap:2px;margin-bottom:16px;
+  background:var(--bg3);border-radius:var(--radius);padding:4px;
+}
+.q-step{
+  flex:1;text-align:center;padding:10px 8px;font-size:12px;font-weight:700;
+  color:var(--text3);cursor:pointer;border-radius:var(--radius-sm);
+  transition:background .15s,color .15s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.q-step:hover{background:var(--bg2);color:var(--text2);}
+.q-step.active{background:var(--bg2);color:var(--accent);box-shadow:0 1px 4px rgba(15,23,42,.06);}
+.q-step.done{color:var(--success);}
+.q-step-num{
+  width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;font-family:var(--font-en);
+  background:var(--border);color:var(--bg2);
+}
+.q-step.active .q-step-num{background:var(--accent);color:white;}
+.q-step.done .q-step-num{background:var(--success);color:white;}
+
+/* step panel */
+.q-step-panel{animation:fadeInStep .2s ease;}
+@keyframes fadeInStep{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* 學員資訊名片卡 */
+.q-hero-card{
+  background:var(--bg2);border-radius:var(--radius);
+  border:1px solid var(--border);box-shadow:var(--shadow);
+  padding:0;overflow:visible;
+}
+.q-hero-top{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:22px 26px 16px;flex-wrap:wrap;gap:12px;
+  border-bottom:2px solid var(--accent);
+}
+.q-hero-left{flex:1;min-width:220px;}
+.q-hero-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.q-hero-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+.q-hero-date-label{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.q-hero-date{font-size:15px;color:var(--accent);font-family:var(--font-en);font-weight:700;}
+.q-level-badge{
+  appearance:none;-webkit-appearance:none;
+  background:var(--accent-l);border:1.5px solid var(--accent);
+  color:var(--accent-d);font-size:14px;font-weight:800;
+  font-family:var(--font-en);border-radius:99px;
+  padding:6px 18px;cursor:pointer;outline:none;
+  transition:all .15s;text-align:center;
+}
+.q-level-badge:focus{box-shadow:0 0 0 3px var(--accent-l);}
+.q-level-badge option{font-weight:600;}
+/* 評語區塊 */
+.q-comment-block{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:14px 26px 16px;
+  background:var(--bg);border-top:1px solid var(--border);
+}
+.q-comment-icon{font-size:16px;flex-shrink:0;margin-top:2px;}
+.q-comment-area{
+  flex:1;background:transparent;border:none;
+  font-size:13px;color:var(--text);font-family:var(--font-tc);
+  resize:none;outline:none;line-height:1.6;min-height:40px;
+}
+.q-comment-area::placeholder{color:var(--text3);}
+.q-comment-area:focus{background:var(--bg2);border-radius:6px;padding:6px 10px;margin:-6px -10px;}
+
 /* 報價單容器 */
 .qcard{
   width:100%;flex-shrink:0;
   background:var(--bg2);border-radius:var(--radius);
   border:1px solid var(--border);box-shadow:var(--shadow);overflow:visible;
 }
-/* 報價單頂部工具列 */
+/* 工具列 */
 .quote-toolbar{
-  width:100%;margin-bottom:16px;flex-shrink:0;
+  width:100%;margin-bottom:12px;flex-shrink:0;
   display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
 }
 .quote-toolbar-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;font-family:var(--font-en);}
-/* 報價單 header band */
-.q-header{
-  background:var(--bg2);
-  border-bottom:2px solid var(--accent);
-  padding:18px 28px 16px;
-  display:grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
-  gap:12px 24px;
-}
-.q-header-left{ grid-column:1; grid-row:1; display:flex;flex-direction:column;gap:6px; }
-.q-header-right{ grid-column:2; grid-row:1; text-align:right; }
-.q-header-bottom{
-  grid-column:1/-1; grid-row:2;
-  display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;
-  padding-top:10px;
-  border-top:1px solid var(--border);
-}
-
-/* 等級 badge 選單 */
-.q-level-wrap{ display:flex;align-items:center;gap:8px; }
-.q-level-label{ font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap; }
-.q-level-select{
-  appearance:none;-webkit-appearance:none;
-  background:var(--accent-l);
-  border:1.5px solid var(--accent);
-  color:var(--accent-d);
-  font-size:13px;font-weight:800;
-  font-family:var(--font-en);
-  border-radius:20px;
-  padding:4px 14px;
-  cursor:pointer;outline:none;
-  transition:background .15s,border-color .15s;
-}
-.q-level-select:focus{ background:#bae6fd;border-color:var(--accent-d); }
-.q-level-select option{ font-weight:600; }
-
-/* 老師評語 */
-.q-comment-wrap{ flex:1;min-width:220px; }
-.q-comment-label{ font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px; }
-.q-comment-input{
-  width:100%;
-  background:var(--bg2);
-  border:1.5px solid var(--border2);
-  border-radius:8px;
-  padding:7px 12px;
-  font-size:13px;
-  color:#1e293b;
-  font-family:var(--font-tc);
-  resize:vertical;
-  outline:none;
-  line-height:1.6;
-  transition:border-color .2s,background .2s;
-  min-height:56px;
-  overflow-y:visible;
-  display:block;
-  box-sizing:border-box;
-}
-.q-comment-input::placeholder{ color:#94a3b8; }
-.q-comment-input:focus{ border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-l); }
-.q-header-left{display:flex;flex-direction:column;gap:8px;}
-.q-header-left .ql{font-size:12px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.6px;}
+/* 姓名輸入 */
 .q-sname-wrap{display:flex;align-items:center;gap:12px;}
 .q-sname-wrap input{
   background:var(--bg3);border:1.5px solid var(--border);
@@ -258,9 +264,6 @@ header{
 .q-sname-wrap input::placeholder{color:var(--text3);}
 .q-sname-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-l);background:var(--bg2);}
 .q-sname-wrap span{color:var(--text2);font-size:18px;font-weight:600;}
-.q-header-right{text-align:right;}
-.q-date-label{font-size:12px;color:var(--text3);margin-bottom:4px;font-family:var(--font-en);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-.q-date-val{font-size:16px;color:var(--accent);font-family:var(--font-en);font-weight:700;}
 .q-sec{
   padding:14px 22px 11px;font-size:13px;font-weight:700;color:var(--text2);
   text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);
@@ -349,7 +352,7 @@ table.dil-table{width:100%;border-collapse:collapse;}
 /* ══════════════════════════════════════
    Overlay / Modal
 ══════════════════════════════════════ */
-.overlay{position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:3000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:3000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);overflow-y:auto;}
 .overlay.show{display:flex;}
 .modal{background:var(--bg2);padding:26px 28px;border-radius:18px;width:420px;max-width:95vw;border:1px solid var(--border);box-shadow:var(--shadow-lg);animation:modalIn .22s cubic-bezier(.34,1.2,.64,1);max-height:90vh;overflow-y:auto;}
 @keyframes modalIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
@@ -850,12 +853,28 @@ table.dil-table{width:100%;border-collapse:collapse;}
   animation: modalIn .22s cubic-bezier(.34,1.2,.64,1);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* 不用 overflow:hidden，讓子元素自己處理滾動 */
+  border-radius: 18px;
+  touch-action: auto;
 }
 .elec-modal-header {
   padding: 20px 24px 16px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  border-radius: 18px 18px 0 0;
+  background: var(--bg2);
+}
+.elec-modal-footer {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  background: var(--bg3);
+  border-radius: 0 0 18px 18px;
 }
 .elec-modal-title {
   font-size: 16px;
@@ -922,10 +941,13 @@ table.dil-table{width:100%;border-collapse:collapse;}
 .cat-tab:hover { background: var(--bg2); color: var(--text2); }
 .cat-tab.active { background: var(--bg2); color: var(--accent); border-color: var(--border); }
 
-/* 課程列表 */
+/* 課程列表 - 可滾動區域 */
 .elec-list {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 1 0;           /* 讓它佔滿剩餘空間 */
+  min-height: 0;          /* flex 子項必須有這個才能收縮 */
+  overflow-y: auto;       /* 超出時顯示捲軸 */
+  -webkit-overflow-scrolling: touch;  /* iOS 慣性滾動 */
+  overscroll-behavior: contain;       /* 不穿透到背景 */
   padding: 12px 16px;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1004,18 +1026,7 @@ table.dil-table{width:100%;border-collapse:collapse;}
   border: 1px solid #fde68a;
 }
 
-/* 底部 bar */
-.elec-modal-footer {
-  padding: 14px 24px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-  background: var(--bg3);
-}
+/* 底部已選計數 */
 .elec-selected-count {
   font-size: 13px;
   color: #92400e;
@@ -1243,179 +1254,191 @@ table.dil-table{width:100%;border-collapse:collapse;}
 
 <!-- ═══ 報價單 ═══ -->
 <div id="quote-page" class="page-content quote-page">
+  <!-- 步驟導航列 -->
+  <div class="q-steps no-print" id="qSteps">
+    <div class="q-step active" data-step="1" onclick="switchQStep(1)">
+      <span class="q-step-num">1</span> 學員資訊
+    </div>
+    <div class="q-step" data-step="2" onclick="switchQStep(2)">
+      <span class="q-step-num">2</span> 方案設定
+    </div>
+    <div class="q-step" data-step="3" onclick="switchQStep(3)">
+      <span class="q-step-num">3</span> 訊息 & 分享
+    </div>
+  </div>
+
+  <!-- 工具列 -->
   <div class="quote-toolbar no-print">
     <div class="quote-toolbar-label">📋 方案報價單</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-ghost btn-sm" onclick="loadQuoteList()" style="color:var(--accent)">📂 載入報價</button>
-      <button class="btn btn-ghost btn-sm" onclick="saveQuote()" style="color:var(--success)">💾 儲存報價</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadQuoteList()" style="color:var(--accent)">📂 載入</button>
+      <button class="btn btn-ghost btn-sm" onclick="saveQuote()" style="color:var(--success)">💾 儲存</button>
       <button class="btn btn-ghost btn-sm" onclick="resetQuote()">↺ 重置</button>
-      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 列印 / PDF</button>
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 列印</button>
     </div>
   </div>
 
   <div class="qcard">
-    <!-- header -->
-    <div class="q-header">
-      <!-- 左上：學員姓名 -->
-      <div class="q-header-left">
-        <div class="ql">學員姓名</div>
-        <div class="q-sname-wrap">
-          <input type="text" id="qStudentName" placeholder="請輸入學員姓名" maxlength="20">
-          <span>的學習方案</span>
+    <!-- ═══ Step 1：學員資訊 ═══ -->
+    <div class="q-step-panel" id="qStep1">
+      <div class="q-hero-card">
+        <div class="q-hero-top">
+          <div class="q-hero-left">
+            <div class="q-hero-label">學員姓名</div>
+            <div class="q-sname-wrap">
+              <input type="text" id="qStudentName" placeholder="請輸入學員姓名" maxlength="20">
+              <span>的學習方案</span>
+            </div>
+          </div>
+          <div class="q-hero-right">
+            <div class="q-hero-date-label">報價日期</div>
+            <div class="q-hero-date" id="qDate"></div>
+            <select id="qTestLevel" class="q-level-badge">
+              <option value="">🎓 未測驗</option>
+              <optgroup label="Kids">
+                <option>Pre-Starter</option><option>Starter</option>
+                <option>Lv 1</option><option>Lv 2</option><option>Lv 3</option>
+                <option>Lv 4</option><option>Lv 5</option><option>Lv 6</option>
+              </optgroup>
+              <optgroup label="Junior">
+                <option>Jr Starter</option><option>Jr Lv 1</option><option>Jr Lv 2</option>
+                <option>Jr Lv 3</option><option>Jr Lv 4</option><option>Jr Lv 5</option><option>Jr Lv 6</option>
+              </optgroup>
+            </select>
+          </div>
         </div>
-      </div>
-      <!-- 右上：報價日期 -->
-      <div class="q-header-right">
-        <div class="q-date-label">報價日期</div>
-        <div class="q-date-val" id="qDate"></div>
-      </div>
-      <!-- 下排：測試等級 + 老師評語 -->
-      <div class="q-header-bottom">
-        <div class="q-level-wrap">
-          <span class="q-level-label">🎓 測試等級</span>
-          <select id="qTestLevel" class="q-level-select">
-            <option value="">未測驗</option>
-            <optgroup label="Kids">
-              <option>Pre-Starter</option>
-              <option>Starter</option>
-              <option>Lv 1</option>
-              <option>Lv 2</option>
-              <option>Lv 3</option>
-              <option>Lv 4</option>
-              <option>Lv 5</option>
-              <option>Lv 6</option>
-            </optgroup>
-            <optgroup label="Junior">
-              <option>Jr Starter</option>
-              <option>Jr Lv 1</option>
-              <option>Jr Lv 2</option>
-              <option>Jr Lv 3</option>
-              <option>Jr Lv 4</option>
-              <option>Jr Lv 5</option>
-              <option>Jr Lv 6</option>
-            </optgroup>
-          </select>
-        </div>
-        <div class="q-comment-wrap">
-          <div class="q-comment-label">💬 老師評語</div>
-          <textarea id="qTeacherComment" class="q-comment-input" rows="3"
-            placeholder="例：發音清楚，句型需加強；活潑外向，口說潛力佳…"
+        <div class="q-comment-block">
+          <div class="q-comment-icon">💬</div>
+          <textarea id="qTeacherComment" class="q-comment-area" rows="2"
+            placeholder="老師評語：例如發音清楚，句型需加強；活潑外向，口說潛力佳…"
+            autocomplete="off"
             oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
         </div>
       </div>
     </div>
 
-    <!-- 方案明細 -->
-    <div class="q-sec">
-      學習方案明細
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <div class="q-view-toggle no-print">
-          <button class="q-view-btn active" id="viewBtnCard" onclick="switchQView('card')">🃏 名片</button>
-          <button class="q-view-btn" id="viewBtnTable" onclick="switchQView('table')">📊 表格</button>
-        </div>
-        <button class="q-add-btn" onclick="addQGiftCol()" title="新增一個贈送欄位" id="addGiftColBtn">🎁 新增贈送欄</button>
-        <button class="q-add-btn" onclick="openTplPicker('KIDS')" style="background:#e0f2fe;color:#0284c7">＋ KIDS 方案</button>
-        <button class="q-add-btn" onclick="openTplPicker('Junior')" style="background:#fef9c3;color:#b45309">＋ Junior 方案</button>
-      </div>
-    </div>
-    <!-- 名片卡 + 推薦選修課 橫向並排 -->
-    <div class="plan-row-wrap" id="planRowWrap">
-      <!-- 左：名片卡 -->
-      <div id="qPlanCardsView" class="plan-cards-view"></div>
-      <!-- 右：推薦選修課側邊面板 -->
-      <div class="elec-side-panel hidden" id="elecSidePanel">
-        <div class="elec-side-header">
-          <div class="elec-side-title">📚 推薦選修課</div>
-          <button class="q-add-btn" onclick="openElecModal()" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:11px;padding:3px 10px">＋ 選擇</button>
-        </div>
-        <div class="elec-grid-wrap" id="elecGridWrap">
-          <div class="elec-grid-empty">點「＋ 選擇」<br>開啟課程庫</div>
+    <!-- ═══ Step 2：方案設定 ═══ -->
+    <div class="q-step-panel" id="qStep2">
+      <!-- 方案明細 -->
+      <div class="q-sec">
+        學習方案明細
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <div class="q-view-toggle no-print">
+            <button class="q-view-btn active" id="viewBtnCard" onclick="switchQView('card')">🃏 名片</button>
+            <button class="q-view-btn" id="viewBtnTable" onclick="switchQView('table')">📊 表格</button>
+          </div>
+          <button class="q-add-btn" onclick="addQGiftCol()" title="新增一個贈送欄位" id="addGiftColBtn">🎁 新增贈送欄</button>
+          <button class="q-add-btn" onclick="openTplPicker('KIDS')" style="background:#e0f2fe;color:#0284c7">＋ KIDS 方案</button>
+          <button class="q-add-btn" onclick="openTplPicker('Junior')" style="background:#fef9c3;color:#b45309">＋ Junior 方案</button>
         </div>
       </div>
-    </div>
-
-    <div class="plan-cards-actions no-print" id="qPlanCardsActions" style="display:none;padding:0 22px 10px">
-      <button class="btn btn-ghost btn-sm" onclick="openShareModal()">📸 截圖分享</button>
-    </div>
-    <!-- 動態表格（切換用），由 JS 完整渲染 -->
-    <div class="q-table-wrap" id="qPlanTableWrap" style="display:none"></div>
-
-    <!-- 推薦選修課（表格模式 fallback / 備份顯示） -->
-    <div class="elec-rec-section" id="elecRecSection" style="display:none">
-      <div class="elec-rec-header">
-        <div class="elec-rec-title">📚 推薦選修課</div>
-        <button class="q-add-btn" onclick="openElecModal()" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a">＋ 選擇課程</button>
+      <!-- 名片卡 + 推薦選修課 橫向並排 -->
+      <div class="plan-row-wrap" id="planRowWrap">
+        <div id="qPlanCardsView" class="plan-cards-view"></div>
+        <div class="elec-side-panel hidden" id="elecSidePanel">
+          <div class="elec-side-header">
+            <div class="elec-side-title">📚 推薦選修課</div>
+            <button class="q-add-btn" onclick="openElecModal()" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:11px;padding:3px 10px">＋ 選擇</button>
+          </div>
+          <div class="elec-grid-wrap" id="elecGridWrap">
+            <div class="elec-grid-empty">點「＋ 選擇」<br>開啟課程庫</div>
+          </div>
+        </div>
       </div>
-      <div id="elecChipsWrap" class="elec-chips-wrap">
-        <span class="elec-rec-empty">尚未選擇推薦課程</span>
+      <div class="plan-cards-actions no-print" id="qPlanCardsActions" style="display:none;padding:0 22px 10px">
+        <button class="btn btn-ghost btn-sm" onclick="openShareModal()">📸 截圖分享</button>
       </div>
-    </div>
-
-    <!-- 勤學活動 -->
-    <div class="q-sec" style="margin-top:4px">
-      勤學活動
-      <div style="display:flex;gap:6px;align-items:center">
-        <button class="q-add-btn" onclick="applyDilTemplate('KIDS')" style="background:#e0f2fe;color:#0284c7">套用 KIDS</button>
-        <button class="q-add-btn" onclick="applyDilTemplate('Junior')" style="background:#fef9c3;color:#b45309">套用 Junior</button>
-        <button class="q-add-btn" onclick="addQDil()">＋ 新增</button>
+      <div class="q-table-wrap" id="qPlanTableWrap" style="display:none"></div>
+      <div class="elec-rec-section" id="elecRecSection" style="display:none">
+        <div class="elec-rec-header">
+          <div class="elec-rec-title">📚 推薦選修課</div>
+          <button class="q-add-btn" onclick="openElecModal()" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a">＋ 選擇課程</button>
+        </div>
+        <div id="elecChipsWrap" class="elec-chips-wrap">
+          <span class="elec-rec-empty">尚未選擇推薦課程</span>
+        </div>
       </div>
-    </div>
-    <div style="overflow-x:auto;padding-bottom:4px" id="qDilTableWrap"></div>
 
-    <!-- 備註 -->
-    <div class="q-remarks">
-      <div class="q-remarks-label">備註</div>
-      <textarea id="qRemarks" placeholder="備註：大夢想家與小夢想家以家庭方案參與勤學活動依照各自帳號分別計算。"></textarea>
-    </div>
-
-    <!-- 訊息產生器 -->
-    <div class="msg-section no-print">
-      <div class="q-sec" style="border-top:1px solid var(--border);border-bottom:none">
-        訊息產生器
+      <!-- 勤學活動 -->
+      <div class="q-sec" style="margin-top:4px">
+        勤學活動
         <div style="display:flex;gap:6px;align-items:center">
-          <button class="q-add-btn" onclick="toggleMsgTpl()" id="msgTplToggle">✏️ 編輯模板</button>
-          <button class="q-add-btn" onclick="generateMsg()" style="background:#dcfce7;color:#166534">📋 產生訊息</button>
+          <button class="q-add-btn" onclick="applyDilTemplate('KIDS')" style="background:#e0f2fe;color:#0284c7">套用 KIDS</button>
+          <button class="q-add-btn" onclick="applyDilTemplate('Junior')" style="background:#fef9c3;color:#b45309">套用 Junior</button>
+          <button class="q-add-btn" onclick="addQDil()">＋ 新增</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;padding-bottom:4px" id="qDilTableWrap"></div>
+
+      <!-- 備註 -->
+      <div class="q-remarks">
+        <div class="q-remarks-label">備註</div>
+        <textarea id="qRemarks" placeholder="備註：大夢想家與小夢想家以家庭方案參與勤學活動依照各自帳號分別計算。"></textarea>
+      </div>
+    </div>
+
+    <!-- ═══ Step 3：訊息 & 分享 ═══ -->
+    <div class="q-step-panel" id="qStep3" style="display:none">
+      <!-- 訊息產生器 -->
+      <div class="msg-section">
+        <div class="q-sec" style="border-bottom:none">
+          訊息產生器
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="q-add-btn" onclick="toggleMsgTpl()" id="msgTplToggle">✏️ 編輯模板</button>
+            <button class="q-add-btn" onclick="generateMsg()" style="background:#dcfce7;color:#166534">📋 產生訊息</button>
+          </div>
+        </div>
+        <div class="msg-format-tabs">
+          <button class="msg-fmt-btn active" id="fmtBtnSingle" onclick="switchMsgFmt('single')">📄 單方案格式</button>
+          <button class="msg-fmt-btn" id="fmtBtnCompare" onclick="switchMsgFmt('compare')">📊 多方案對比</button>
+        </div>
+        <div id="msgTplEditor" style="display:none;padding:14px 22px;border-bottom:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.6">
+            可用變數：<code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{姓名}</code>
+            <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{方案}</code>
+            <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{月數}</code>
+            <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{月付}</code>
+            <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{總價}</code>
+            <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{一付加贈}</code>
+            <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{截止日}</code>
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>贈送項目</label>
+            <textarea id="msgGifts" rows="3" style="font-size:13px" placeholder="課程顧問特別加贈：+5 堂選修課&#10;兒童節加碼：+10 堂選修課"></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>優惠截止日</label>
+            <input type="date" id="msgDeadline">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>訊息模板</label>
+            <textarea id="msgTemplate" rows="16" style="font-size:13px;font-family:var(--font-tc);line-height:1.7"></textarea>
+          </div>
+        </div>
+        <div id="msgOutput" style="display:none;padding:14px 22px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:12px;color:var(--text3);font-weight:600">預覽訊息</div>
+            <button class="q-add-btn" onclick="copyMsg()" id="copyBtn" style="background:#dcfce7;color:#166534">📋 複製全部</button>
+          </div>
+          <div id="msgPreview" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 18px;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text);cursor:text;user-select:all;max-height:500px;overflow-y:auto"></div>
         </div>
       </div>
 
-      <!-- 訊息格式切換 -->
-      <div class="msg-format-tabs">
-        <button class="msg-fmt-btn active" id="fmtBtnSingle" onclick="switchMsgFmt('single')">📄 單方案格式</button>
-        <button class="msg-fmt-btn" id="fmtBtnCompare" onclick="switchMsgFmt('compare')">📊 多方案對比</button>
-      </div>
-
-      <!-- 模板編輯區（預設隱藏） -->
-      <div id="msgTplEditor" style="display:none;padding:14px 22px;border-bottom:1px solid var(--border)">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.6">
-          可用變數：<code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{姓名}</code>
-          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{方案}</code>
-          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{月數}</code>
-          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{月付}</code>
-          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{總價}</code>
-          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{一付加贈}</code>
-          <code style="background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11px">{截止日}</code>
+      <!-- 課程介紹公版 -->
+      <div class="msg-section" style="margin-top:12px">
+        <div class="q-sec" style="border-bottom:none">
+          📄 課程介紹（傳給家長）
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="q-add-btn" onclick="generateCourseIntro()" style="background:#e0f2fe;color:#0369a1">📋 產生介紹</button>
+          </div>
         </div>
-        <div class="form-group" style="margin-bottom:10px">
-          <label>贈送項目（每行一項，會自動產生 • 列表）</label>
-          <textarea id="msgGifts" rows="3" style="font-size:13px" placeholder="課程顧問特別加贈：+5 堂選修課&#10;兒童節加碼：+10 堂選修課"></textarea>
+        <div id="courseIntroOutput" style="display:none;padding:14px 22px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:12px;color:var(--text3);font-weight:600">課程介紹預覽（可手動編輯）</div>
+            <button class="q-add-btn" onclick="copyCourseIntro()" style="background:#dcfce7;color:#166534">📋 複製全部</button>
+          </div>
+          <textarea id="courseIntroPreview" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 18px;font-size:14px;line-height:1.8;color:var(--text);min-height:400px;resize:vertical;font-family:var(--font-tc);outline:none;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
         </div>
-        <div class="form-group" style="margin-bottom:10px">
-          <label>優惠截止日</label>
-          <input type="date" id="msgDeadline">
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label>訊息模板（每個方案會各產生一段）</label>
-          <textarea id="msgTemplate" rows="16" style="font-size:13px;font-family:var(--font-tc);line-height:1.7"></textarea>
-        </div>
-      </div>
-
-      <!-- 產生結果區 -->
-      <div id="msgOutput" style="display:none;padding:14px 22px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div style="font-size:12px;color:var(--text3);font-weight:600">預覽訊息</div>
-          <button class="q-add-btn" onclick="copyMsg()" id="copyBtn" style="background:#dcfce7;color:#166534">📋 複製全部</button>
-        </div>
-        <div id="msgPreview" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 18px;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text);cursor:text;user-select:all;max-height:500px;overflow-y:auto"></div>
       </div>
     </div>
   </div>
@@ -3597,6 +3620,146 @@ function getElecRecHtml(){
     <div style="font-size:9px;font-weight:700;color:#92400e;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">推薦選修課</div>
     <div>${items}${more}</div>
   </div>`;
+}
+
+/* ════════ 課程介紹公版 ════════ */
+const COURSE_INTRO_TPL = `━━━━━━━━━━━━━━━━━━━
+📚 ETalking Kids 課程介紹
+━━━━━━━━━━━━━━━━━━━
+
+{姓名}媽媽/爸爸您好 😊
+
+以下為我們三大課程類型的介紹，讓您更了解孩子的學習內容：
+
+━━━━━━━━━━━━━━━━━━━
+
+🟦 【進度班】主課程
+━━━━━━━━━━━━━━━━━━━
+進度班是孩子的主要學習軸線，採用國際認證教材系統性授課。
+
+📌 課程特色：
+• 依照孩子程度分級（Pre-Starter ～ Lv6）
+• 一對一真人外師互動教學（25 分鐘/堂）
+• 教材涵蓋聽、說、讀、寫四大能力
+• 每堂課有課前預習 + 課後複習系統
+• 定期升級評量，追蹤學習進度
+
+📌 學習成效：
+• 建立英語聽說自信
+• 系統性累積文法與字彙量
+• 培養英文閱讀習慣
+
+━━━━━━━━━━━━━━━━━━━
+
+🟨 【選修課】主題式加強
+━━━━━━━━━━━━━━━━━━━
+選修課是進度班之外的補充課程，依孩子興趣和弱項選擇。
+
+📌 課程類型：
+• 發音拼讀：Phonics / Consonant Blends / 長短母音
+• 口說會話：Show and Tell / Conversation Corner / Speak Up
+• 文法寫作：Basic Grammar / Grammar Series / Writing
+• STEAM 跨域：Coding Scratch / 科學實驗 / 英語數學
+• 檢定備考：YLE 劍橋英檢 / GEPT 全民英檢
+• 閱讀進階：Daily Talk / 閱讀技巧
+
+📌 學習成效：
+• 針對弱項重點加強
+• 多元主題激發學習興趣
+• 跨領域用英文思考
+
+━━━━━━━━━━━━━━━━━━━
+
+🟩 【魔法屋】趣味互動課
+━━━━━━━━━━━━━━━━━━━
+魔法屋是 ETalking Kids 的特色課程，以「玩中學」為核心理念。
+
+📌 課程特色：
+• 主題式趣味課程（節慶、文化、故事等）
+• 遊戲化互動設計，讓孩子開口不害怕
+• 適合低起點或內向的孩子建立信心
+• 課程輕鬆無壓力，培養英語好感度
+
+📌 學習成效：
+• 降低學習焦慮，建立英文好感
+• 自然開口說英文
+• 認識不同文化與主題
+
+━━━━━━━━━━━━━━━━━━━
+
+💡 給家長的學習建議
+━━━━━━━━━━━━━━━━━━━
+✅ 建議每週至少 2-3 堂，維持語感持續性
+✅ 進度班為主軸，搭配選修課補強弱項
+✅ 低年級 / 初學者可多排魔法屋建立信心
+✅ 課前 5 分鐘帶孩子預習，效果加倍
+✅ 定期與課程顧問回顧學習狀況，適時調整
+
+如有任何問題，歡迎隨時聯繫！
+Lily・ETalking Kids 課程顧問 ☺️`;
+
+function generateCourseIntro(){
+  const name = document.getElementById('qStudentName').value.trim() || '___';
+  const level = document.getElementById('qTestLevel').value;
+  let msg = COURSE_INTRO_TPL.replace(/\{姓名\}/g, name);
+
+  // 如果有等級，在底部加個人化建議
+  if(level){
+    const isBeginnerish = ['Pre-Starter','Pre-Starter（入門前）','Starter'].some(l=>level.includes(l));
+    const isIntermediate = ['Lv 2','Lv 3','Lv 4'].some(l=>level.includes(l));
+    const isAdvanced = ['Lv 5','Lv 6'].some(l=>level.includes(l));
+
+    let personalTip = `\n\n━━━━━━━━━━━━━━━━━━━\n🎯 ${name} 的個人化建議（${level}）\n━━━━━━━━━━━━━━━━━━━\n`;
+    if(isBeginnerish){
+      personalTip += `• 建議先從魔法屋開始，建立英文好感度\n• 搭配 Phonics / Letter Sounds 自然發音課程\n• 進度班穩定每週 2 堂，循序漸進\n• 初期不用急著追進度，先讓孩子「喜歡」最重要`;
+    } else if(isIntermediate){
+      personalTip += `• 進度班可提升到每週 2-3 堂，加速累積\n• 搭配 Grammar Series 強化句型結構\n• Show and Tell / Conversation Corner 練口說\n• 可開始準備 YLE 劍橋英檢 Starters/Movers`;
+    } else if(isAdvanced){
+      personalTip += `• 進度班維持每週 3 堂以上，衝刺進度\n• 搭配 Writing / Essay 練習書寫表達\n• Speak Up / Debate 訓練邏輯思辨\n• 建議準備 GEPT 全民英檢或更高級別檢定`;
+    } else {
+      personalTip += `• 依照 ${level} 程度，建議進度班搭配適合的選修課\n• 保持每週穩定上課頻率\n• 定期評量追蹤學習成效`;
+    }
+    msg += personalTip;
+  }
+
+  document.getElementById('courseIntroPreview').value = msg;
+  document.getElementById('courseIntroOutput').style.display = 'block';
+  document.getElementById('courseIntroOutput').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function copyCourseIntro(){
+  const text = document.getElementById('courseIntroPreview').value;
+  navigator.clipboard.writeText(text).then(()=>{
+    alert('✅ 已複製課程介紹！可直接貼到 LINE 傳給家長');
+  }).catch(()=>{
+    document.getElementById('courseIntroPreview').select();
+    document.execCommand('copy');
+    alert('✅ 已複製！');
+  });
+}
+
+/* ════════ 報價單步驟切換 ════════ */
+let qCurrentStep = 1;
+function switchQStep(step){
+  qCurrentStep = step;
+  // 切換面板顯示
+  [1,2,3].forEach(s=>{
+    const panel = document.getElementById('qStep'+s);
+    if(panel) panel.style.display = s===step ? '' : 'none';
+  });
+  // 更新步驟列
+  document.querySelectorAll('.q-step').forEach(el=>{
+    const s = parseInt(el.dataset.step);
+    el.classList.remove('active','done');
+    if(s===step) el.classList.add('active');
+    else if(s<step) el.classList.add('done');
+  });
+  // Step 2 時確保卡片渲染
+  if(step===2){
+    if(qCurrentView==='card') renderQPlanCards();
+    else renderQPlan();
+    renderQDil();
+  }
 }
 
 /* ════════ 初始化 ════════ */
