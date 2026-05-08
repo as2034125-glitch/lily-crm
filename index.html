@@ -1787,28 +1787,40 @@ async function pushToCloud(){
   isSyncing=false;
 }
 
-// 從雲端拉取
+// 從雲端拉取（逐一發送，避免 JSONP 同時發造成干擾）
 async function pullFromCloud(){
   if(isSyncing) return;
   isSyncing=true;
   setSyncStatus('下載中...','var(--accent)');
   try{
-    const [students, sts, quotes] = await Promise.all([
-      cloudGet('getStudents'),
-      cloudGet('getStatuses'),
-      cloudGet('getQuotes')
-    ]);
-
+    // 1. 學員資料
+    syncLog('拉取學員資料...');
+    const students = await cloudGet('getStudents');
     if(Array.isArray(students) && students.length > 0){
       data = students;
       localStorage.setItem("lily_crm_vFinal", JSON.stringify(data));
+      syncLog(`✅ 學員 ${students.length} 筆`);
     }
+
+    // 2. 狀態設定
+    syncLog('拉取狀態設定...');
+    const sts = await cloudGet('getStatuses');
     if(Array.isArray(sts) && sts.length > 0){
       statuses = sts;
       localStorage.setItem("lily_crm_status_vFinal", JSON.stringify(statuses));
+      syncLog(`✅ 狀態 ${sts.length} 組`);
     }
-    if(Array.isArray(quotes)){
-      localStorage.setItem('lily_quotes', JSON.stringify(quotes));
+
+    // 3. 報價單
+    syncLog('拉取報價單...');
+    try{
+      const quotes = await cloudGet('getQuotes');
+      if(Array.isArray(quotes) && quotes.length > 0){
+        localStorage.setItem('lily_quotes', JSON.stringify(quotes));
+        syncLog(`✅ 報價單 ${quotes.length} 筆`);
+      }
+    }catch(qe){
+      syncLog(`⚠️ 報價單拉取失敗（可能尚未建立）: ${qe.message}`);
     }
 
     // 重新渲染所有頁面
@@ -1819,6 +1831,7 @@ async function pullFromCloud(){
     setTimeout(()=>setSyncStatus('',''),3000);
   }catch(e){
     console.error('Cloud pull error:',e);
+    syncLog(`❌ 下載失敗: ${e.message}`);
     setSyncStatus('同步失敗','var(--danger)');
   }
   isSyncing=false;
@@ -3184,6 +3197,8 @@ async function saveQuote(){
     id: existing>=0 ? list[existing].id : Date.now(),
     name,
     planNames,
+    savedAt: new Date().toISOString(),
+    studentName: name,
     date: new Date().toLocaleDateString('zh-TW'),
     data: snapshot
   };
@@ -3194,10 +3209,18 @@ async function saveQuote(){
     list.unshift(entry);
   }
   putSavedQuotes(list);
-  // 同步到雲端
+  // 同步整份報價單到雲端
   setSyncStatus('儲存報價中...','var(--accent)');
-  try{ await cloudPost('saveQuote', entry); setSyncStatus('✓ 報價已同步','var(--success)'); setTimeout(()=>setSyncStatus('',''),3000); }
-  catch(e){ console.error('Quote cloud save error:',e); setSyncStatus('雲端儲存失敗（本地已存）','var(--danger)'); }
+  try{
+    await fetchPost('saveQuotes', list);
+    syncLog(`✅ 報價單已同步（${list.length} 筆）`);
+    setSyncStatus('✓ 報價已同步','var(--success)');
+    setTimeout(()=>setSyncStatus('',''),3000);
+  }catch(e){
+    console.error('Quote cloud save error:',e);
+    syncLog(`⚠️ 報價單雲端儲存失敗: ${e.message}`);
+    setSyncStatus('雲端儲存失敗（本地已存）','var(--danger)');
+  }
   alert(`✅ 已儲存「${name}」的報價單`);
 }
 
@@ -3261,8 +3284,11 @@ async function deleteQuote(i){
   if(!confirm(`確定刪除「${q.name}」的報價單？`)) return;
   list.splice(i,1);
   putSavedQuotes(list);
-  // 雲端刪除
-  try{ await cloudGet('deleteQuote&id='+q.id); }catch(e){ console.error(e); }
+  // 同步整份到雲端
+  try{
+    await fetchPost('saveQuotes', list);
+    syncLog(`✅ 報價單刪除同步成功（剩 ${list.length} 筆）`);
+  }catch(e){ console.error(e); }
   loadQuoteList();
 }
 
