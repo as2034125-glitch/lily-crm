@@ -1663,6 +1663,9 @@ if(sessionStorage.getItem('lily_logged_in')==='1'){
 /* ════════ CRM 資料 ════════ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbwaJfQsr2zKC7BW1v7-fqCFeTCAojuNQJmu1i712BcSONgrqbnzq4nQn36xDsgBo2g-JQ/exec';
 const API_KEY = 'd2e4cf110dd9399d73089d3bb3fd2072';
+/* ⬇ DEMO 行事曆 GAS（獨立部署，貼上 /exec 網址）⬇ */
+const DEMO_API_URL = 'https://script.google.com/macros/s/AKfycbzEqQaImFrNC-cfdMSEa5AKWqYaC6TsezdabRO4dpjtmQtTeH3VjonXFU1h4etiKWPTVQ/exec';
+let demoEvents=[];
 let isSyncing=false;
 
 function safeParse(key, fallback){
@@ -1987,7 +1990,32 @@ function switchPage(pageId,el){
 }
 
 /* ════════ Calendar ════════ */
-function calEvents(){return data.map(x=>({id:x.id.toString(),title:x.name,start:x.time,backgroundColor:(statuses.find(s=>s.name===x.status)||{}).color||'#0ea5e9',borderColor:'transparent',textColor:'#fff'}));}
+function calEvents(){
+  const studentEv=data.map(x=>({id:x.id.toString(),title:x.name,start:x.time,backgroundColor:(statuses.find(s=>s.name===x.status)||{}).color||'#0ea5e9',borderColor:'transparent',textColor:'#fff',extendedProps:{isDemo:false}}));
+  return studentEv.concat(demoEvents);
+}
+/* 從 DEMO 行事曆 GAS 讀取（JSONP），畫成橘色不可拖曳事件 */
+async function loadDemoEvents(){
+  if(!DEMO_API_URL || DEMO_API_URL.indexOf('PASTE_')===0) return;
+  try{
+    const list=await jsonpRequest(DEMO_API_URL+'?action=getDemos');
+    if(Array.isArray(list)){
+      demoEvents=list.map((d,i)=>({
+        id:'demo_'+i,
+        title:'🎯 DEMO · '+(d.name||''),
+        start:d.start,
+        end:d.end||undefined,
+        backgroundColor:'#f59e0b',
+        borderColor:'#d97706',
+        textColor:'#fff',
+        editable:false,
+        extendedProps:{isDemo:true}
+      }));
+      refreshCal();
+      syncLog('✅ DEMO 行事曆 '+demoEvents.length+' 筆');
+    }
+  }catch(e){ syncLog('❌ DEMO 行事曆讀取失敗: '+e.message); }
+}
 function refreshCal(){if(!calendarInstance)return;calendarInstance.getEventSources().forEach(s=>s.remove());calendarInstance.addEventSource(calEvents());}
 function initCal(){
   calendarInstance=new FullCalendar.Calendar(document.getElementById('calendar'),{
@@ -1995,13 +2023,14 @@ function initCal(){
     eventTimeFormat:{hour:'2-digit',minute:'2-digit',hour12:false},
     events:calEvents(),
     dateClick:info=>openModal(null,info.dateStr),
-    eventClick:info=>openModal(info.event.id),
+    eventClick:info=>{if(info.event.extendedProps&&info.event.extendedProps.isDemo)return;openModal(info.event.id);},
     eventDrop:info=>{
+      if(info.event.extendedProps&&info.event.extendedProps.isDemo){info.revert();return;}
       const item=data.find(x=>x.id==info.event.id);
       if(item){const d=info.event.start,pad=n=>String(n).padStart(2,'0'),t=item.time.split('T')[1]||'09:00';
         item.time=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${t}`;persist();renderBoard();updateSalesUI();}
     },
-    eventDidMount:info=>{info.el.oncontextmenu=e=>showCtxMenu(e,info.event.id);},
+    eventDidMount:info=>{if(info.event.extendedProps&&info.event.extendedProps.isDemo)return;info.el.oncontextmenu=e=>showCtxMenu(e,info.event.id);},
     datesSet:info=>{
       // 行事曆翻頁時同步全域月份
       const mid = new Date(info.start.getTime() + (info.end.getTime()-info.start.getTime())/2);
@@ -2013,6 +2042,7 @@ function initCal(){
     }
   });
   calendarInstance.render();
+  loadDemoEvents();
 }
 
 /* ════════ 看板 ════════ */
